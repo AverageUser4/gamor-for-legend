@@ -2,43 +2,71 @@
 
   class Gamor {
 
+  // loading
+  loadIntervalId;
+  needToBeLoadedCount = 0;
+
   // drawing
   canvas;
   ctx;
   backgroundImage;
   playerImage;
   shouldRedraw = true;
+  canvasWidth = 800;
+  canvasHeight = 600;
 
   // stats and info
   playerX = 0;
   playerY = 500;
   playerSpeed = 7;
   playerDirection = 'right';
+  playerWidth;
+  playerHeight;
 
   // input / output
   pressedKeys = new Set();
 
-  /*
-    mapLength - how many times background should be repeated
-  */
+  // background, position, etc.
+  mapEndX;
+  backgroundRepeatCount = 2;
+  translateOffsetX = 0;
 
   constructor() {
     this.canvas = document.querySelector('canvas');
     this.ctx = this.canvas.getContext('2d');
 
-    this.backgroundImage = new Image();
-    this.backgroundImage.src = 'village.jpg';
-    this.backgroundImage.addEventListener('load', () => this.draw(), { once: true });
+    this.requestImage('backgroundImage', 'village.jpg');
+    this.requestImage('playerImage', 'player.png');
 
-    this.playerImage = new Image();
-    this.playerImage.src = 'player.png';
-    this.playerImage.addEventListener('load', () => this.draw(), { once: true });
+    this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
 
     setInterval(() => this.gameLoop(), 33);
 
-    // canvas has to have tabindex set
-    this.canvas.addEventListener('keydown', (e) => this.keyDown(e));
-    this.canvas.addEventListener('keyup', (e) => this.keyUp(e));
+    window.addEventListener('keydown', (e) => this.keyDown(e));
+    window.addEventListener('keyup', (e) => this.keyUp(e));
+  }
+
+  requestImage(propertyName, src) {
+    this.needToBeLoadedCount++;
+    this[propertyName] = new Image();
+    this[propertyName].src = src;
+    this[propertyName].addEventListener('load', 
+      () => this.needToBeLoadedCount--, { once: true });
+  }
+
+  checkResourcesLoaded() {
+    if(this.needToBeLoadedCount > 0)
+      return;
+
+    clearInterval(this.loadIntervalId);
+
+    this.mapEndX = this.backgroundRepeatCount * this.backgroundImage.naturalWidth;
+
+    this.playerWidth = this.playerImage.naturalWidth;
+    this.playerHeight = this.playerImage.naturalHeight;
+    this.playerY = this.canvasHeight - this.playerImage.naturalHeight;
+
+    this.draw();
   }
 
   gameLoop() {
@@ -60,18 +88,57 @@
       this.shouldRedraw = true;
       this.playerDirection = 'right';
     }
+
+
+    if(this.playerX < 0)
+      this.playerX = 0;
+    if(this.playerX + this.playerWidth > this.mapEndX)
+      this.playerX = this.mapEndX - this.playerWidth;
+
+
+    // camera movement
+    if(this.playerX >= 300)
+      this.translateOffsetX = -this.playerX + 300;
+
+    const checkTranslate = this.backgroundImage.naturalWidth * -this.backgroundRepeatCount + 800;
+    if(this.translateOffsetX < checkTranslate)
+      this.translateOffsetX = checkTranslate;
   }
 
   draw() {
-    this.ctx.drawImage(this.backgroundImage, 0, 0);
+    console.log(`X: ${this.playerX}`);
 
+    this.ctx.save();
+    this.ctx.translate(this.translateOffsetX, 0);
+
+    this.drawBackground();
+
+    this.drawPlayer();
+    
+    this.ctx.restore();
+
+    this.shouldRedraw = false;
+  }
+
+  drawBackground() {
+    let x = 0;
+
+    for(let i = 0; i < this.backgroundRepeatCount; i++) {
+      this.ctx.drawImage(this.backgroundImage, x, 0);
+      x += this.backgroundImage.naturalWidth;
+    }
+  }
+
+  drawPlayer() {
     if(this.playerDirection === 'left')
       this.mirrorImage(this.playerImage, this.playerX, this.playerY, true);
     else
       this.ctx.drawImage(this.playerImage, this.playerX, this.playerY);
 
-    this.shouldRedraw = false;
+    this.ctx.strokeStyle = 'red';
+    this.ctx.strokeRect(this.playerX, this.playerY, this.playerImage.naturalWidth, this.playerImage.naturalHeight);
   }
+  
 
   keyDown(e) {
     this.pressedKeys.add(e.key);
@@ -90,7 +157,7 @@
         x + (horizontal ? image.width : 0),
         y + (vertical ? image.height : 0)
     );
-    this.ctx.drawImage(image, 0, 0);
+    this.ctx.drawImage(image, -this.translateOffsetX, 0);
     this.ctx.restore();
   }
 
