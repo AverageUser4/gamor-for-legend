@@ -1,3 +1,6 @@
 'use strict';
 
-const gamor = new Gamor();
+console.log(Interactor.getPressedKeys())
+
+
+const levelor = new Levelor();
