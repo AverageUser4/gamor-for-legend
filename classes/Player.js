@@ -2,25 +2,27 @@
 
   class Player {
 
-  x = 0;
-  y = 500;
-  speed = 7;
+  x;
+  y;
+  speed;
   direction = 'right';
   width;
   height;
 
-  constructor() {
-
+  constructor(x = 0, y = 500, speed = 7) {
+    this.x = x;
+    this.y = y;
+    this.speed = speed;
   }
 
   logic() {
-    if(this.pressedKeys.has('a') || this.pressedKeys.has('ArrowLeft')) {
+    if(Interactor.isPressed('a') || Interactor.isPressed('ArrowLeft')) {
       this.playerX -= this.playerSpeed;
       this.shouldRedraw = true;
       this.playerDirection = 'left';
     }
 
-    if(this.pressedKeys.has('d') || this.pressedKeys.has('ArrowRight')) {
+    if(Interactor.isPressed('d') || Interactor.isPressed('ArrowRight')) {
       this.playerX += this.playerSpeed;
       this.shouldRedraw = true;
       this.playerDirection = 'right';
