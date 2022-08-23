@@ -2,6 +2,10 @@
 
   class Levelor {
 
+  /*
+    enemy moving does not cause redrawing
+  */
+
   // player
   playerSpeed = 7;
   playerWidth;
@@ -53,11 +57,15 @@
   backgroundImage;
   playerImage;
   playerBulletImage;
+  enemyImage;
 
   // background, position, etc.
   mapEndX;
-  backgroundRepeatCount = 5;
+  backgroundRepeatCount = 1;
   translateOffsetX = 0;
+
+  // enemies
+  allEnemies = [];
 
   constructor(options) {
     if(!Object.hasOwn(options, 'backgroundSrc'))
@@ -71,8 +79,11 @@
     this.requestImage('backgroundImage', options.backgroundSrc);
     this.requestImage('playerImage', 'player.png');
     this.requestImage('playerBulletImage', 'dagger.png');
+    this.requestImage('enemyImage', 'villager.png');
 
     this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
+
+    this.allEnemies.push(new Enemy(500, 500));
   }
 
   requestImage(propertyName, src) {
@@ -102,6 +113,43 @@
 
     this.shouldRedraw = true;
     this.draw();
+  }
+
+  gameLoopIteration() {
+    this.playerLogic();
+    this.playerBulletLogic();
+
+    for(let val of this.allEnemies) {
+      if(val.logic(this.playerX, this.mapEndX))
+        this.shouldRedraw = true;
+    }
+
+    this.draw();
+  }
+
+  draw() {
+    if(!this.shouldRedraw)
+      return;
+
+    this.shouldRedraw = false;
+
+    console.log(`X: ${this.playerX}`);
+
+    canvasor.ctx.save();
+    canvasor.ctx.translate(this.translateOffsetX, 0);
+
+    this.drawBackground();
+    this.drawUI();
+
+    this.drawPlayer();
+
+    for(let val of this.allEnemies) {
+      this.drawEnemy(val);
+    }
+
+    this.drawPlayerBullet();
+
+    canvasor.ctx.restore();
   }
 
   playerLogic() {
@@ -168,28 +216,6 @@
       this.playerBulletX = -1000;
   }
 
-  draw() {
-    if(!this.shouldRedraw)
-      return;
-
-    this.shouldRedraw = false;
-
-    console.log(`X: ${this.playerX}`);
-
-    canvasor.ctx.save();
-    canvasor.ctx.translate(this.translateOffsetX, 0);
-
-    this.drawBackground();
-
-    this.drawPlayer();
-    
-    this.drawPlayerBullet();
-
-    this.drawUI();
-
-    canvasor.ctx.restore();
-  }
-
   drawBackground() {
     let x = 0;
 
@@ -219,6 +245,20 @@
     // debug
     canvasor.ctx.strokeStyle = 'red';
     canvasor.ctx.strokeRect(this.playerBulletX, this.playerBulletY, this.playerBulletWidth,  this.playerBulletHeight);
+  }
+
+  drawEnemy(enemy) {
+    if(enemy.direction === 'right')
+      canvasor.ctx.drawImage(this.enemyImage, enemy.x, enemy.y);
+    else
+      this.mirrorImage(this.enemyImage, enemy.x, enemy.y, true);      
+
+    // debug
+    canvasor.ctx.strokeStyle = 'red';
+    // temporary
+    this.enemyWidth = 82;
+    this.enemyHeight = 110;
+    canvasor.ctx.strokeRect(enemy.x, enemy.y, this.enemyWidth, this.enemyHeight);
   }
 
   drawUI() {
@@ -284,12 +324,6 @@
     );
     canvasor.ctx.drawImage(image, -this.translateOffsetX, 0);
     canvasor.ctx.restore();
-  }
-
-  gameLoopIteration() {
-    this.playerLogic();
-    this.playerBulletLogic();
-    this.draw();
   }
 
 }
