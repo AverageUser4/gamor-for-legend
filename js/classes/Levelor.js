@@ -4,11 +4,20 @@
 
   // player
   playerSpeed = 7;
-  playerDirection = 'right';
   playerWidth;
   playerHeight;
   #playerX = 0;
   playerY = 500;
+  #playerDirection = 'right';
+
+  get playerDirection() {
+    return this.#playerDirection;
+  }
+  set playerDirection(direction) {
+    this.#playerDirection = direction;
+    this.shouldRedraw = true;
+  }
+
   get playerX() {
     return this.#playerX;
   }
@@ -18,6 +27,9 @@
   }
 
   // playerBullet
+  playerHealthMax = 100;
+  playerHealth = 90;
+  playerBulletCooldownMax = 36;
   playerBulletCooldown = 0;
   playerBulletSpeed = 0;
   playerBulletWidth;
@@ -104,6 +116,11 @@
       this.playerDirection = 'right';
     }
 
+    if(interactor.isPressed('s') || interactor.isPressed('ArrowDown'))
+      this.playerDirection = 'right';
+    if(interactor.isPressed('w') || interactor.isPressed('ArrowUp'))
+      this.playerDirection = 'left';
+
     if(this.playerX < 0)
       this.playerX = 0;
     if(this.playerX + this.playerWidth > this.mapEndX)
@@ -129,7 +146,7 @@
   }
 
   playerAttack() {
-    this.playerBulletCooldown = 36;
+    this.playerBulletCooldown = this.playerBulletCooldownMax;
     this.playerBulletSpeed = this.playerSpeed * 3;
 
     if(this.playerDirection === 'right')
@@ -168,6 +185,8 @@
     
     this.drawPlayerBullet();
 
+    this.drawUI();
+
     canvasor.ctx.restore();
   }
 
@@ -186,6 +205,7 @@
     else
       this.mirrorImage(this.playerImage, this.playerX, this.playerY, true);      
 
+    // debug
     canvasor.ctx.strokeStyle = 'red';
     canvasor.ctx.strokeRect(this.playerX, this.playerY, this.playerWidth, this.playerHeight);
   }
@@ -196,8 +216,61 @@
     else if(this.playerBulletSpeed < 0)
       this.mirrorImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY, true);
 
+    // debug
     canvasor.ctx.strokeStyle = 'red';
     canvasor.ctx.strokeRect(this.playerBulletX, this.playerBulletY, this.playerBulletWidth,  this.playerBulletHeight);
+  }
+
+  drawUI() {
+    // background
+    canvasor.ctx.fillStyle = '#523b0a';
+    canvasor.ctx.fillRect(-this.translateOffsetX, 0, canvasor.width, 50);
+    canvasor.ctx.fillStyle = '#402e07';
+    canvasor.ctx.fillRect(-this.translateOffsetX, 50, canvasor.width, 4);
+
+    // player image and frame
+    canvasor.ctx.fillStyle = '#666';
+    canvasor.ctx.fillRect(-this.translateOffsetX + 5, 6, 40, 40);
+
+    canvasor.ctx.save();
+    canvasor.ctx.scale(0.43, 0.43);
+    canvasor.ctx.drawImage(this.playerImage, -this.translateOffsetX * 2.3256 + 19, 10);
+    canvasor.ctx.restore();
+
+    canvasor.ctx.lineWidth = 2;
+    canvasor.ctx.strokeStyle = '#111';
+    canvasor.ctx.strokeRect(-this.translateOffsetX + 5, 6, 40, 40);
+
+    // health
+    canvasor.ctx.fillStyle = 'green';
+    let fillAmount = this.playerHealth / this.playerHealthMax * 325;
+    canvasor.ctx.fillRect(-this.translateOffsetX + 65, 6, fillAmount, 40);
+
+    canvasor.ctx.fillStyle = 'red';
+    canvasor.ctx.strokeRect(-this.translateOffsetX + 65, 6, 325, 40);
+
+    canvasor.ctx.fillStyle = '#111';
+    canvasor.ctx.font = '16px sans-serif';
+    canvasor.ctx.fillText(`HP: ${this.playerHealth} / ${this.playerHealthMax}`,
+      -this.translateOffsetX + 75, 32);
+
+    // fatigue
+    canvasor.ctx.fillStyle = 'yellow';
+    fillAmount = this.playerBulletCooldown / this.playerBulletCooldownMax * 325;
+    canvasor.ctx.fillRect(-this.translateOffsetX + 410, 6, fillAmount, 40);
+
+    canvasor.ctx.strokeRect(-this.translateOffsetX + 410, 6, 325, 40);
+
+    canvasor.ctx.fillStyle = '#111';
+    canvasor.ctx.fillText(`FP: ${this.playerBulletCooldown} / ${this.playerBulletCooldownMax}`,
+      -this.translateOffsetX + 425, 32);
+
+    // status effect
+    canvasor.ctx.fillStyle = '#666';
+    canvasor.ctx.fillRect(-this.translateOffsetX + 755, 6, 40, 40);
+    canvasor.ctx.strokeRect(-this.translateOffsetX + 755, 6, 40, 40);
+    canvasor.ctx.font = '24px sans-serif';
+    canvasor.ctx.fillText('🚫', -this.translateOffsetX + 763, 35);
   }
 
   mirrorImage(image, x = 0, y = 0, horizontal = false, vertical = false) {
