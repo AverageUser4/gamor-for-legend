@@ -8,12 +8,27 @@
   playerWidth;
   playerHeight;
   #playerX = 0;
-  #playerY = 500;
+  playerY = 500;
   get playerX() {
     return this.#playerX;
   }
   set playerX(x) {
     this.#playerX = x;
+    this.shouldRedraw = true;
+  }
+
+  // playerBullet
+  playerBulletCooldown = 0;
+  playerBulletSpeed = 0;
+  playerBulletWidth;
+  playerBulletHeight;
+  playerBulletY = 400;
+  #playerBulletX = -1000;
+  get playerBulletX() {
+    return this.#playerBulletX;
+  }
+  set playerBulletX(x) {
+    this.#playerBulletX = x;
     this.shouldRedraw = true;
   }
 
@@ -25,6 +40,7 @@
   needToBeLoadedCount = 0;
   backgroundImage;
   playerImage;
+  playerBulletImage;
 
   // background, position, etc.
   mapEndX;
@@ -42,6 +58,7 @@
 
     this.requestImage('backgroundImage', options.backgroundSrc);
     this.requestImage('playerImage', 'player.png');
+    this.requestImage('playerBulletImage', 'dagger.png');
 
     this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
   }
@@ -64,13 +81,19 @@
 
     this.playerWidth = this.playerImage.naturalWidth;
     this.playerHeight = this.playerImage.naturalHeight;
-    this.#playerY = canvasor.height - this.playerImage.naturalHeight;
+    this.playerY = canvasor.height - this.playerImage.naturalHeight;
+
+    this.playerBulletWidth = this.playerBulletImage.naturalWidth;
+    this.playerBulletHeight = this.playerBulletImage.naturalHeight;
+    this.playerBulletY = canvasor.height -
+      this.playerBulletImage.naturalHeight - this.playerImage.naturalHeight / 2;
 
     this.shouldRedraw = true;
     this.draw();
   }
 
   playerLogic() {
+    // movement
     if(interactor.isPressed('a') || interactor.isPressed('ArrowLeft')) {
       this.playerX -= this.playerSpeed;
       this.playerDirection = 'left';
@@ -80,7 +103,6 @@
       this.playerX += this.playerSpeed;
       this.playerDirection = 'right';
     }
-
 
     if(this.playerX < 0)
       this.playerX = 0;
@@ -97,6 +119,36 @@
         this.translateOffsetX = checkTranslate;
     }
 
+
+    // attack
+    if(
+        this.playerBulletCooldown <= 0 && 
+        (interactor.isPressed(' ') || interactor.isPressedMouse())
+      )
+        this.playerAttack();
+  }
+
+  playerAttack() {
+    this.playerBulletCooldown = 36;
+    this.playerBulletSpeed = this.playerSpeed * 3;
+
+    if(this.playerDirection === 'right')
+      this.playerBulletX = this.playerX + this.playerWidth;
+    else {
+      this.playerBulletX = this.playerX - this.playerBulletWidth;
+      this.playerBulletSpeed *= -1;
+    }
+  }
+
+  playerBulletLogic() {
+    if(this.playerBulletCooldown <= 0)
+      return;
+
+    this.playerBulletX += this.playerBulletSpeed;
+    this.playerBulletCooldown--;
+
+    if(this.playerBulletCooldown <= 0)
+      this.playerBulletX = -1000;
   }
 
   draw() {
@@ -114,6 +166,8 @@
 
     this.drawPlayer();
     
+    this.drawPlayerBullet();
+
     canvasor.ctx.restore();
   }
 
@@ -127,13 +181,23 @@
   }
 
   drawPlayer() {
-    if(this.playerDirection === 'left')
-      this.mirrorImage(this.playerImage, this.playerX, this.#playerY, true);
+    if(this.playerDirection === 'right')
+      canvasor.ctx.drawImage(this.playerImage, this.playerX, this.playerY);
     else
-      canvasor.ctx.drawImage(this.playerImage, this.playerX, this.#playerY);
+      this.mirrorImage(this.playerImage, this.playerX, this.playerY, true);      
 
     canvasor.ctx.strokeStyle = 'red';
-    canvasor.ctx.strokeRect(this.playerX, this.#playerY, this.playerImage.naturalWidth, this.playerImage.naturalHeight);
+    canvasor.ctx.strokeRect(this.playerX, this.playerY, this.playerWidth, this.playerHeight);
+  }
+
+  drawPlayerBullet() {
+    if(this.playerBulletSpeed > 0)
+      canvasor.ctx.drawImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY);
+    else if(this.playerBulletSpeed < 0)
+      this.mirrorImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY, true);
+
+    canvasor.ctx.strokeStyle = 'red';
+    canvasor.ctx.strokeRect(this.playerBulletX, this.playerBulletY, this.playerBulletWidth,  this.playerBulletHeight);
   }
 
   mirrorImage(image, x = 0, y = 0, horizontal = false, vertical = false) {
@@ -151,6 +215,7 @@
 
   gameLoopIteration() {
     this.playerLogic();
+    this.playerBulletLogic();
     this.draw();
   }
 
