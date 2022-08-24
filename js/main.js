@@ -1,7 +1,7 @@
 'use strict';
 
 let levelor = new Levelor({
-  backgroundSrc: 'village.jpg',
+  backgroundSrc: 'backgrounds/village.jpg',
   levelSize: 10
 });
 

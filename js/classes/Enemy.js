@@ -9,6 +9,9 @@
   y = 500;
   direction = 'left';
   health = 100;
+  isDead = false;
+  spawnOriginX;
+  distanceToKeep = 300;
 
   // bullet
   bulletCooldownMax = 36;
@@ -19,9 +22,19 @@
   bulletY = 400;
   bulletX = -1000;
 
-  constructor(x, y, options) {
+  // taken damage
+  damageTaken = 34;
+  damageTakenY = 480;
+
+  constructor(x, y, width, height, options) {
     this.x = x;
     this.y = y;
+    this.width = width;
+    this.height = height;
+    this.spawnOriginX = x;
+
+    this.speed = Math.floor(Math.random() * 6) + 1;
+    this.distanceToKeep = Math.floor(Math.random() * 201) + 200;
   }
 
   logic(playerX, mapEndX) {
@@ -29,14 +42,14 @@
 
     // movement
     const distance = Math.abs(this.x - playerX);
-    if(distance > 300 && distance < 700) {
+    if(distance > this.distanceToKeep && distance < 700) {
       if(this.x > playerX)
         this.x -= this.speed;
       else
         this.x += this.speed;
 
       returnValue = true;
-    } else if(distance < 295) {
+    } else if(distance < this.distanceToKeep - this.speed) {
       if(this.x > playerX)
         this.x += this.speed;
       else
@@ -76,6 +89,14 @@
 
     if(this.bulletCooldown <= 0)
       this.bulletX = -1000;
+  }
+
+  getDamaged(damage) {
+    this.health -= damage;
+    if(this.health <= 0) {
+      this.health = 0;
+      this.isDead = true;
+    }
   }
 
 }

@@ -1,12 +1,10 @@
 'use strict';
 
-  class Levelor {
-
-  /*
-    enemy moving does not cause redrawing
-  */
+class Levelor {
 
   // player
+  playerHealthMax = 100;
+  playerHealth = 90;
   playerSpeed = 7;
   playerWidth;
   playerHeight;
@@ -31,15 +29,24 @@
   }
 
   // playerBullet
-  playerHealthMax = 100;
-  playerHealth = 90;
+  playerBulletCanDamage = true;
   playerBulletCooldownMax = 36;
   playerBulletCooldown = 0;
   playerBulletSpeed = 0;
   playerBulletWidth;
   playerBulletHeight;
-  playerBulletY = 400;
+  playerBulletYBase = 400;
+  #playerBulletY = 400;
   #playerBulletX = -1000;
+
+  get playerBulletY() {
+    return this.#playerBulletY;
+  }
+  set playerBulletY(y) {
+    this.#playerBulletY = y;
+    this.shouldRedraw = true;
+  }
+
   get playerBulletX() {
     return this.#playerBulletX;
   }
@@ -65,6 +72,8 @@
   translateOffsetX = 0;
 
   // enemies
+  enemyWidth;
+  enemyHeight;
   allEnemies = [];
 
   constructor(options) {
@@ -77,13 +86,11 @@
     canvasor.ctx = canvasor.ctx;
 
     this.requestImage('backgroundImage', options.backgroundSrc);
-    this.requestImage('playerImage', 'player.png');
-    this.requestImage('playerBulletImage', 'dagger.png');
-    this.requestImage('enemyImage', 'villager.png');
+    this.requestImage('playerImage', 'characters/player.png');
+    this.requestImage('playerBulletImage', 'weapons/dagger.png');
+    this.requestImage('enemyImage', 'characters/burgher.png');
 
     this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
-
-    this.allEnemies.push(new Enemy(500, 500));
   }
 
   requestImage(propertyName, src) {
@@ -110,6 +117,15 @@
     this.playerBulletHeight = this.playerBulletImage.naturalHeight;
     this.playerBulletY = canvasor.height -
       this.playerBulletImage.naturalHeight - this.playerImage.naturalHeight / 2;
+    this.playerBulletYBase = this.playerBulletY;
+    
+    this.enemyWidth = this.enemyImage.naturalWidth;
+    this.enemyHeight = this.enemyImage.naturalHeight;
+    this.allEnemies.push(new Enemy(500, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
+    this.allEnemies.push(new Enemy(600, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
+    this.allEnemies.push(new Enemy(700, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
+    this.allEnemies.push(new Enemy(800, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
+    this.allEnemies.push(new Enemy(900, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
 
     this.shouldRedraw = true;
     this.draw();
@@ -194,15 +210,16 @@
   }
 
   playerAttack() {
+    this.playerBulletCanDamage = true;
+    this.playerBulletY = this.playerBulletYBase;
+
     this.playerBulletCooldown = this.playerBulletCooldownMax;
     this.playerBulletSpeed = this.playerSpeed * 3;
 
-    if(this.playerDirection === 'right')
-      this.playerBulletX = this.playerX + this.playerWidth;
-    else {
-      this.playerBulletX = this.playerX - this.playerBulletWidth;
+    this.playerBulletX = this.playerX;
+
+    if(this.playerDirection === 'left')
       this.playerBulletSpeed *= -1;
-    }
   }
 
   playerBulletLogic() {
@@ -212,8 +229,29 @@
     this.playerBulletX += this.playerBulletSpeed;
     this.playerBulletCooldown--;
 
-    if(this.playerBulletCooldown <= 0)
+    if(this.playerBulletCooldown <= 0) {
       this.playerBulletX = -1000;
+      return;
+    }
+
+    if(!this.playerBulletCanDamage) {
+      this.playerBulletY += this.playerBulletSpeed * 2;
+      return;
+    }
+
+    for(let i = 0; i < this.allEnemies.length; i++) {
+      console.log(this.playerBulletX, this.playerBulletWidth, this.allEnemies[i].width)
+      if(
+          this.playerBulletX + this.playerBulletWidth - 35 >= this.allEnemies[i].x &&
+          this.playerBulletX <= this.allEnemies[i].x + this.allEnemies[i].width 
+        ) {
+          this.playerBulletCanDamage = false;
+          this.allEnemies[i].getDamaged(66);
+          if(this.allEnemies[i].isDead)
+            this.allEnemies.splice(i, 1);
+          break;
+        }
+    }
   }
 
   drawBackground() {
@@ -253,12 +291,13 @@
     else
       this.mirrorImage(this.enemyImage, enemy.x, enemy.y, true);      
 
+    canvasor.ctx.fillStyle = 'red';
+    canvasor.ctx.fillText(`-${enemy.damageTaken}`, enemy.x, enemy.damageTakenY);
+
     // debug
     canvasor.ctx.strokeStyle = 'red';
     // temporary
-    this.enemyWidth = 82;
-    this.enemyHeight = 110;
-    canvasor.ctx.strokeRect(enemy.x, enemy.y, this.enemyWidth, this.enemyHeight);
+    canvasor.ctx.strokeRect(enemy.x, enemy.y, enemy.width, enemy.height);
   }
 
   drawUI() {
