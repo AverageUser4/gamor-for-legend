@@ -2,31 +2,11 @@
 
 class Levelor {
 
+  // metadata
+  ready = false;
+
   // player
-  playerHealthMax = 100;
-  playerHealth = 90;
-  playerSpeed = 7;
-  playerWidth;
-  playerHeight;
-  #playerX = 0;
-  playerY = 500;
-  #playerDirection = 'right';
-
-  get playerDirection() {
-    return this.#playerDirection;
-  }
-  set playerDirection(direction) {
-    this.#playerDirection = direction;
-    this.shouldRedraw = true;
-  }
-
-  get playerX() {
-    return this.#playerX;
-  }
-  set playerX(x) {
-    this.#playerX = x;
-    this.shouldRedraw = true;
-  }
+  player
 
   // playerBullet
   playerBulletCanDamage = true;
@@ -132,9 +112,9 @@ class Levelor {
     this.backgroundWidth = this.backgroundImage.naturalWidth;
     this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
-    this.playerWidth = this.playerImage.naturalWidth;
-    this.playerHeight = this.playerImage.naturalHeight;
-    this.playerY = canvasor.height - this.playerImage.naturalHeight;
+    let w = this.playerImage.naturalWidth;
+    let h = this.playerImage.naturalHeight;
+    this.player = new Player(0, canvasor.height - h, w, h, this.playerImage);
 
     this.playerBulletWidth = this.playerBulletImage.naturalWidth;
     this.playerBulletHeight = this.playerBulletImage.naturalHeight;
@@ -142,8 +122,8 @@ class Levelor {
       this.playerBulletImage.naturalHeight - this.playerImage.naturalHeight / 2;
     this.playerBulletYBase = this.playerBulletY;
     
-    let w = this.enemyImages[0].naturalWidth;
-    let h = this.enemyImages[0].naturalHeight;
+    w = this.enemyImages[0].naturalWidth;
+    h = this.enemyImages[0].naturalHeight;
     this.allEnemies.push(new Enemy(500, canvasor.height - h, w, h, this.enemyImages[0], this.enemyWeaponImages[0]));
     this.allEnemies.push(new Enemy(600, canvasor.height - h, w, h, this.enemyImages[0], this.enemyWeaponImages[0]));
 
@@ -155,14 +135,22 @@ class Levelor {
 
     this.shouldRedraw = true;
     this.draw();
+
+    this.ready = true;
   }
 
   gameLoopIteration() {
-    this.playerLogic();
+    const playerReturnObject = this.player.logic(this.mapEndX, this.playerBulletCooldown);
+    if(playerReturnObject.shouldRedraw)
+      this.shouldRedraw = true;
+    if(playerReturnObject.shouldAttack)
+      this.playerAttack();
+    
+    this.cameraMovement();
     this.playerBulletLogic();
 
     for(let val of this.allEnemies) {
-      if(val.logic(this.playerX, this.mapEndX))
+      if(val.logic(this.player.x, this.mapEndX))
         this.shouldRedraw = true;
     }
 
@@ -175,7 +163,7 @@ class Levelor {
 
     this.shouldRedraw = false;
 
-    console.log(`X: ${this.playerX}`);
+    console.log(`X: ${this.player.x}`);
 
     canvasor.ctx.save();
     canvasor.ctx.translate(this.translateOffsetX, 0);
@@ -183,7 +171,7 @@ class Levelor {
     this.drawBackground();
     this.drawUI();
 
-    this.drawPlayer();
+    this.player.draw(this.translateOffsetX);
 
     for(let val of this.allEnemies) {
       val.draw(this.translateOffsetX);
@@ -194,45 +182,15 @@ class Levelor {
     canvasor.ctx.restore();
   }
 
-  playerLogic() {
-    // movement
-    if(interactor.isPressed('a') || interactor.isPressed('ArrowLeft')) {
-      this.playerX -= this.playerSpeed;
-      this.playerDirection = 'left';
-    }
+  cameraMovement() {
+    if(this.player.x < this.playerOffsetMoveBackgroundStart)
+      return;
 
-    if(interactor.isPressed('d') || interactor.isPressed('ArrowRight')) {
-      this.playerX += this.playerSpeed;
-      this.playerDirection = 'right';
-    }
+    this.translateOffsetX = -this.player.x + this.playerOffsetMoveBackgroundStart;
 
-    if(interactor.isPressed('s') || interactor.isPressed('ArrowDown'))
-      this.playerDirection = 'right';
-    if(interactor.isPressed('w') || interactor.isPressed('ArrowUp'))
-      this.playerDirection = 'left';
-
-    if(this.playerX < 0)
-      this.playerX = 0;
-    if(this.playerX + this.playerWidth > this.mapEndX)
-      this.playerX = this.mapEndX - this.playerWidth;
-
-
-    // camera movement
-    if(this.playerX >= this.playerOffsetMoveBackgroundStart) {
-      this.translateOffsetX = -this.playerX + this.playerOffsetMoveBackgroundStart;
-
-      const checkTranslate = this.backgroundWidth * -this.backgroundRepeatCount + canvasor.width;
-      if(this.translateOffsetX < checkTranslate)
-        this.translateOffsetX = checkTranslate;
-    }
-
-
-    // attack
-    if(
-        this.playerBulletCooldown <= 0 && 
-        (interactor.isPressed(' ') || interactor.isPressedMouse())
-      )
-        this.playerAttack();
+    const checkTranslate = this.backgroundWidth * -this.backgroundRepeatCount + canvasor.width;
+    if(this.translateOffsetX < checkTranslate)
+      this.translateOffsetX = checkTranslate;
   }
 
   playerAttack() {
@@ -240,11 +198,11 @@ class Levelor {
     this.playerBulletY = this.playerBulletYBase;
 
     this.playerBulletCooldown = this.playerBulletCooldownMax;
-    this.playerBulletSpeed = this.playerSpeed * 3;
+    this.playerBulletSpeed = this.player.speed * 3;
 
-    this.playerBulletX = this.playerX;
+    this.playerBulletX = this.player.x;
 
-    if(this.playerDirection === 'left')
+    if(this.player.direction === 'left')
       this.playerBulletSpeed *= -1;
   }
 
@@ -290,26 +248,13 @@ class Levelor {
       x += this.backgroundWidth;
 
       if(
-          x + this.backgroundWidth < this.playerX - this.playerOffsetMoveBackgroundStart ||
-          x  > this.playerX + canvasor.width - this.playerOffsetMoveBackgroundStart
+          x + this.backgroundWidth < this.player.x - this.playerOffsetMoveBackgroundStart ||
+          x  > this.player.x + canvasor.width - this.playerOffsetMoveBackgroundStart
         )
           continue; 
 
-      console.log(i)
-
       canvasor.ctx.drawImage(this.backgroundImage, x, 0);
     }
-  }
-
-  drawPlayer() {
-    if(this.playerDirection === 'right')
-      canvasor.ctx.drawImage(this.playerImage, this.playerX, this.playerY);
-    else
-      canvasor.mirrorImage(this.playerImage, this.playerX, this.playerY, true, false, this.translateOffsetX);      
-
-    // debug
-    canvasor.ctx.strokeStyle = 'red';
-    canvasor.ctx.strokeRect(this.playerX, this.playerY, this.playerWidth, this.playerHeight);
   }
 
   drawPlayerBullet() {
@@ -345,7 +290,7 @@ class Levelor {
 
     // health
     canvasor.ctx.fillStyle = 'green';
-    let fillAmount = this.playerHealth / this.playerHealthMax * 325;
+    let fillAmount = this.player.health / this.player.healthMax * 325;
     canvasor.ctx.fillRect(-this.translateOffsetX + 65, 6, fillAmount, 40);
 
     canvasor.ctx.fillStyle = 'red';
@@ -353,7 +298,7 @@ class Levelor {
 
     canvasor.ctx.fillStyle = '#111';
     canvasor.ctx.font = '16px sans-serif';
-    canvasor.ctx.fillText(`HP: ${this.playerHealth} / ${this.playerHealthMax}`,
+    canvasor.ctx.fillText(`HP: ${this.player.health} / ${this.player.healthMax}`,
       -this.translateOffsetX + 75, 32);
 
     // fatigue

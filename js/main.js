@@ -16,7 +16,8 @@ let levelor = new Levelor({
 });
 
 function gameLoop() {
-  levelor.gameLoopIteration();
+  if(levelor.ready)
+    levelor.gameLoopIteration();
 }
 
 setInterval(() => gameLoop(), 33);
