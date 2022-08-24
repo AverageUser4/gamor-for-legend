@@ -7,33 +7,7 @@ class Levelor {
 
   // player
   player
-
-  // playerBullet
-  playerBulletCanDamage = true;
-  playerBulletCooldownMax = 36;
-  playerBulletCooldown = 0;
-  playerBulletSpeed = 0;
-  playerBulletWidth;
-  playerBulletHeight;
-  playerBulletYBase = 400;
-  #playerBulletY = 400;
-  #playerBulletX = -1000;
-
-  get playerBulletY() {
-    return this.#playerBulletY;
-  }
-  set playerBulletY(y) {
-    this.#playerBulletY = y;
-    this.shouldRedraw = true;
-  }
-
-  get playerBulletX() {
-    return this.#playerBulletX;
-  }
-  set playerBulletX(x) {
-    this.#playerBulletX = x;
-    this.shouldRedraw = true;
-  }
+  playerBullet;
 
   // drawing
   shouldRedraw = true;
@@ -116,11 +90,10 @@ class Levelor {
     let h = this.playerImage.naturalHeight;
     this.player = new Player(0, canvasor.height - h, w, h, this.playerImage);
 
-    this.playerBulletWidth = this.playerBulletImage.naturalWidth;
-    this.playerBulletHeight = this.playerBulletImage.naturalHeight;
-    this.playerBulletY = canvasor.height -
-      this.playerBulletImage.naturalHeight - this.playerImage.naturalHeight / 2;
-    this.playerBulletYBase = this.playerBulletY;
+    w = this.playerBulletImage.naturalWidth;
+    h = this.playerBulletImage.naturalHeight;
+    const y = canvasor.height - h - this.playerImage.naturalHeight / 2;
+    this.playerBullet = new Bullet(-1000, y, w, h, this.playerBulletImage);
     
     w = this.enemyImages[0].naturalWidth;
     h = this.enemyImages[0].naturalHeight;
@@ -140,14 +113,22 @@ class Levelor {
   }
 
   gameLoopIteration() {
-    const playerReturnObject = this.player.logic(this.mapEndX, this.playerBulletCooldown);
-    if(playerReturnObject.shouldRedraw)
+    let returnObject = this.player.logic(this.mapEndX, this.playerBullet.cooldown);
+    if(returnObject.shouldRedraw)
       this.shouldRedraw = true;
-    if(playerReturnObject.shouldAttack)
-      this.playerAttack();
+    if(returnObject.shouldAttack)
+      this.playerBullet.getThrown(this.player.x, this.player.direction);
     
     this.cameraMovement();
-    this.playerBulletLogic();
+
+    returnObject = this.playerBullet.logic(this.allEnemies);
+    if(returnObject.shouldRedraw)
+      this.shouldRedraw = true;
+    if(Object.hasOwn(returnObject, 'i')) {
+      this.allEnemies[returnObject.i].getDamaged(66);
+      if(this.allEnemies[returnObject.i].isDead)
+        this.allEnemies.splice(returnObject.i, 1);
+    }
 
     for(let val of this.allEnemies) {
       if(val.logic(this.player.x, this.mapEndX))
@@ -177,7 +158,7 @@ class Levelor {
       val.draw(this.translateOffsetX);
     }
 
-    this.drawPlayerBullet();
+    this.playerBullet.draw(this.translateOffsetX);
 
     canvasor.ctx.restore();
   }
@@ -191,54 +172,6 @@ class Levelor {
     const checkTranslate = this.backgroundWidth * -this.backgroundRepeatCount + canvasor.width;
     if(this.translateOffsetX < checkTranslate)
       this.translateOffsetX = checkTranslate;
-  }
-
-  playerAttack() {
-    this.playerBulletCanDamage = true;
-    this.playerBulletY = this.playerBulletYBase;
-
-    this.playerBulletCooldown = this.playerBulletCooldownMax;
-    this.playerBulletSpeed = this.player.speed * 3;
-
-    this.playerBulletX = this.player.x;
-
-    if(this.player.direction === 'left')
-      this.playerBulletSpeed *= -1;
-  }
-
-  playerBulletLogic() {
-    if(this.playerBulletCooldown <= 0)
-      return;
-
-    this.playerBulletX += this.playerBulletSpeed;
-    this.playerBulletCooldown--;
-
-    if(this.playerBulletCooldown <= 0) {
-      this.playerBulletX = -1000;
-      return;
-    }
-
-    if(!this.playerBulletCanDamage) {
-      if(this.playerBulletSpeed > 0)
-        this.playerBulletY += this.playerBulletSpeed * 2;
-      else
-        this.playerBulletY -= this.playerBulletSpeed * 2;
-      return;
-    }
-
-    for(let i = 0; i < this.allEnemies.length; i++) {
-      console.log(this.playerBulletX, this.playerBulletWidth, this.allEnemies[i].width)
-      if(
-          this.playerBulletX + this.playerBulletWidth - 35 >= this.allEnemies[i].x &&
-          this.playerBulletX <= this.allEnemies[i].x + this.allEnemies[i].width 
-        ) {
-          this.playerBulletCanDamage = false;
-          this.allEnemies[i].getDamaged(66);
-          if(this.allEnemies[i].isDead)
-            this.allEnemies.splice(i, 1);
-          break;
-        }
-    }
   }
 
   drawBackground() {
@@ -255,17 +188,6 @@ class Levelor {
 
       canvasor.ctx.drawImage(this.backgroundImage, x, 0);
     }
-  }
-
-  drawPlayerBullet() {
-    if(this.playerBulletSpeed > 0)
-      canvasor.ctx.drawImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY);
-    else if(this.playerBulletSpeed < 0)
-      canvasor.mirrorImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY, true, false, this.translateOffsetX);
-
-    // debug
-    canvasor.ctx.strokeStyle = 'red';
-    canvasor.ctx.strokeRect(this.playerBulletX, this.playerBulletY, this.playerBulletWidth,  this.playerBulletHeight);
   }
 
   drawUI() {
@@ -303,13 +225,13 @@ class Levelor {
 
     // fatigue
     canvasor.ctx.fillStyle = 'yellow';
-    fillAmount = this.playerBulletCooldown / this.playerBulletCooldownMax * 325;
+    fillAmount = this.playerBullet.cooldown / this.playerBullet.cooldownMax * 325;
     canvasor.ctx.fillRect(-this.translateOffsetX + 410, 6, fillAmount, 40);
 
     canvasor.ctx.strokeRect(-this.translateOffsetX + 410, 6, 325, 40);
 
     canvasor.ctx.fillStyle = '#111';
-    canvasor.ctx.fillText(`FP: ${this.playerBulletCooldown} / ${this.playerBulletCooldownMax}`,
+    canvasor.ctx.fillText(`FP: ${this.playerBullet.cooldown} / ${this.playerBullet.cooldownMax}`,
       -this.translateOffsetX + 425, 32);
 
     // status effect
