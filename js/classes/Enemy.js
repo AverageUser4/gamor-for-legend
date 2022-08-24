@@ -26,12 +26,19 @@
   damageTaken = 34;
   damageTakenY = 480;
 
-  constructor(x, y, width, height, options) {
+  // images
+  image;
+  weaponImage;
+
+  constructor(x, y, width, height, image, weaponImage) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
     this.spawnOriginX = x;
+
+    this.image = image;
+    this.weaponImage = weaponImage;
 
     this.speed = Math.floor(Math.random() * 6) + 1;
     this.distanceToKeep = Math.floor(Math.random() * 201) + 200;
@@ -42,7 +49,7 @@
 
     // movement
     const distance = Math.abs(this.x - playerX);
-    if(distance > this.distanceToKeep && distance < 700) {
+    if(distance > this.distanceToKeep && distance < 900) {
       if(this.x > playerX)
         this.x -= this.speed;
       else

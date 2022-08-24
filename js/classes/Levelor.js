@@ -64,7 +64,9 @@ class Levelor {
   backgroundImage;
   playerImage;
   playerBulletImage;
-  enemyImage;
+  enemyImages = [];
+  enemyWeaponImages = [];
+  loadingAttemptCount = 0;
 
   // background, position, etc.
   mapEndX;
@@ -72,13 +74,13 @@ class Levelor {
   translateOffsetX = 0;
 
   // enemies
-  enemyWidth;
-  enemyHeight;
   allEnemies = [];
 
   constructor(options) {
     if(!Object.hasOwn(options, 'backgroundSrc'))
       throw new Error('No background source provided in options object of Levelor constuctor.');
+    if(!Object.hasOwn(options, 'enemyImagesSources'))
+      throw new Error('You need to provide image source for at least one enemy and its weapon');
 
     if(Object.hasOwn(options, 'levelSize'))
       this.backgroundRepeatCount = options.levelSize;
@@ -88,7 +90,8 @@ class Levelor {
     this.requestImage('backgroundImage', options.backgroundSrc);
     this.requestImage('playerImage', 'characters/player.png');
     this.requestImage('playerBulletImage', 'weapons/dagger.png');
-    this.requestImage('enemyImage', 'characters/burgher.png');
+    for(let val of options.enemyImagesSources)
+      this.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc);
 
     this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
   }
@@ -101,7 +104,24 @@ class Levelor {
       () => this.needToBeLoadedCount--, { once: true });
   }
 
+  requestEnemyAndEnemyWeaponImages(enemySrc, weaponSrc) {
+    this.needToBeLoadedCount += 2;
+
+    this.enemyImages.push(new Image());
+    this.enemyImages[this.enemyImages.length - 1].src = enemySrc;
+    this.enemyImages[this.enemyImages.length - 1].addEventListener('load', 
+      () => this.needToBeLoadedCount--, { once: true });
+
+    this.enemyWeaponImages.push(new Image());
+    this.enemyWeaponImages[this.enemyWeaponImages.length - 1].src = weaponSrc;
+    this.enemyWeaponImages[this.enemyWeaponImages.length - 1].addEventListener('load', 
+      () => this.needToBeLoadedCount--, { once: true });
+  }
+
   checkResourcesLoaded() {
+    this.loadingAttemptCount++;
+    if(this.loadingAttemptCount >= 50)
+      throw new Error('Failed to load required resources.');
     if(this.needToBeLoadedCount > 0)
       return;
 
@@ -119,13 +139,16 @@ class Levelor {
       this.playerBulletImage.naturalHeight - this.playerImage.naturalHeight / 2;
     this.playerBulletYBase = this.playerBulletY;
     
-    this.enemyWidth = this.enemyImage.naturalWidth;
-    this.enemyHeight = this.enemyImage.naturalHeight;
-    this.allEnemies.push(new Enemy(500, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
-    this.allEnemies.push(new Enemy(600, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
-    this.allEnemies.push(new Enemy(700, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
-    this.allEnemies.push(new Enemy(800, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
-    this.allEnemies.push(new Enemy(900, canvasor.height - this.enemyHeight, this.enemyWidth, this.enemyHeight));
+    let w = this.enemyImages[0].naturalWidth;
+    let h = this.enemyImages[0].naturalHeight;
+    this.allEnemies.push(new Enemy(500, canvasor.height - h, w, h, this.enemyImages[0], this.enemyWeaponImages[0]));
+    this.allEnemies.push(new Enemy(600, canvasor.height - h, w, h, this.enemyImages[0], this.enemyWeaponImages[0]));
+
+    w = this.enemyImages[1].naturalWidth;
+    h = this.enemyImages[1].naturalHeight;
+    this.allEnemies.push(new Enemy(700, canvasor.height - h, w, h, this.enemyImages[1], this.enemyWeaponImages[0]));
+    this.allEnemies.push(new Enemy(800, canvasor.height - h, w, h, this.enemyImages[1], this.enemyWeaponImages[0]));
+    this.allEnemies.push(new Enemy(900, canvasor.height - h, w, h, this.enemyImages[1], this.enemyWeaponImages[0]));
 
     this.shouldRedraw = true;
     this.draw();
@@ -235,7 +258,10 @@ class Levelor {
     }
 
     if(!this.playerBulletCanDamage) {
-      this.playerBulletY += this.playerBulletSpeed * 2;
+      if(this.playerBulletSpeed > 0)
+        this.playerBulletY += this.playerBulletSpeed * 2;
+      else
+        this.playerBulletY -= this.playerBulletSpeed * 2;
       return;
     }
 
@@ -287,9 +313,9 @@ class Levelor {
 
   drawEnemy(enemy) {
     if(enemy.direction === 'right')
-      canvasor.ctx.drawImage(this.enemyImage, enemy.x, enemy.y);
+      canvasor.ctx.drawImage(enemy.image, enemy.x, enemy.y);
     else
-      this.mirrorImage(this.enemyImage, enemy.x, enemy.y, true);      
+      this.mirrorImage(enemy.image, enemy.x, enemy.y, true);      
 
     canvasor.ctx.fillStyle = 'red';
     canvasor.ctx.fillText(`-${enemy.damageTaken}`, enemy.x, enemy.damageTakenY);
