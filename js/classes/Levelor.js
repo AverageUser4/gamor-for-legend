@@ -62,6 +62,7 @@ class Levelor {
   loadIntervalId;
   needToBeLoadedCount = 0;
   backgroundImage;
+  backgroundWidth;
   playerImage;
   playerBulletImage;
   enemyImages = [];
@@ -69,6 +70,7 @@ class Levelor {
   loadingAttemptCount = 0;
 
   // background, position, etc.
+  playerOffsetMoveBackgroundStart = 300;
   mapEndX;
   backgroundRepeatCount = 1;
   translateOffsetX = 0;
@@ -127,7 +129,8 @@ class Levelor {
 
     clearInterval(this.loadIntervalId);
 
-    this.mapEndX = this.backgroundRepeatCount * this.backgroundImage.naturalWidth;
+    this.backgroundWidth = this.backgroundImage.naturalWidth;
+    this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
     this.playerWidth = this.playerImage.naturalWidth;
     this.playerHeight = this.playerImage.naturalHeight;
@@ -183,7 +186,7 @@ class Levelor {
     this.drawPlayer();
 
     for(let val of this.allEnemies) {
-      this.drawEnemy(val);
+      val.draw(this.translateOffsetX);
     }
 
     this.drawPlayerBullet();
@@ -215,10 +218,10 @@ class Levelor {
 
 
     // camera movement
-    if(this.playerX >= 300) {
-      this.translateOffsetX = -this.playerX + 300;
+    if(this.playerX >= this.playerOffsetMoveBackgroundStart) {
+      this.translateOffsetX = -this.playerX + this.playerOffsetMoveBackgroundStart;
 
-      const checkTranslate = this.backgroundImage.naturalWidth * -this.backgroundRepeatCount + 800;
+      const checkTranslate = this.backgroundWidth * -this.backgroundRepeatCount + canvasor.width;
       if(this.translateOffsetX < checkTranslate)
         this.translateOffsetX = checkTranslate;
     }
@@ -281,11 +284,20 @@ class Levelor {
   }
 
   drawBackground() {
-    let x = 0;
+    let x = -this.backgroundWidth;
 
     for(let i = 0; i < this.backgroundRepeatCount; i++) {
+      x += this.backgroundWidth;
+
+      if(
+          x + this.backgroundWidth < this.playerX - this.playerOffsetMoveBackgroundStart ||
+          x  > this.playerX + canvasor.width - this.playerOffsetMoveBackgroundStart
+        )
+          continue; 
+
+      console.log(i)
+
       canvasor.ctx.drawImage(this.backgroundImage, x, 0);
-      x += this.backgroundImage.naturalWidth;
     }
   }
 
@@ -293,7 +305,7 @@ class Levelor {
     if(this.playerDirection === 'right')
       canvasor.ctx.drawImage(this.playerImage, this.playerX, this.playerY);
     else
-      this.mirrorImage(this.playerImage, this.playerX, this.playerY, true);      
+      canvasor.mirrorImage(this.playerImage, this.playerX, this.playerY, true, false, this.translateOffsetX);      
 
     // debug
     canvasor.ctx.strokeStyle = 'red';
@@ -304,26 +316,11 @@ class Levelor {
     if(this.playerBulletSpeed > 0)
       canvasor.ctx.drawImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY);
     else if(this.playerBulletSpeed < 0)
-      this.mirrorImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY, true);
+      canvasor.mirrorImage(this.playerBulletImage, this.playerBulletX, this.playerBulletY, true, false, this.translateOffsetX);
 
     // debug
     canvasor.ctx.strokeStyle = 'red';
     canvasor.ctx.strokeRect(this.playerBulletX, this.playerBulletY, this.playerBulletWidth,  this.playerBulletHeight);
-  }
-
-  drawEnemy(enemy) {
-    if(enemy.direction === 'right')
-      canvasor.ctx.drawImage(enemy.image, enemy.x, enemy.y);
-    else
-      this.mirrorImage(enemy.image, enemy.x, enemy.y, true);      
-
-    canvasor.ctx.fillStyle = 'red';
-    canvasor.ctx.fillText(`-${enemy.damageTaken}`, enemy.x, enemy.damageTakenY);
-
-    // debug
-    canvasor.ctx.strokeStyle = 'red';
-    // temporary
-    canvasor.ctx.strokeRect(enemy.x, enemy.y, enemy.width, enemy.height);
   }
 
   drawUI() {
@@ -376,19 +373,6 @@ class Levelor {
     canvasor.ctx.strokeRect(-this.translateOffsetX + 755, 6, 40, 40);
     canvasor.ctx.font = '24px sans-serif';
     canvasor.ctx.fillText('🚫', -this.translateOffsetX + 763, 35);
-  }
-
-  mirrorImage(image, x = 0, y = 0, horizontal = false, vertical = false) {
-    /*! https://stackoverflow.com/questions/3129099/how-to-flip-images-horizontally-with-html5 */
-    canvasor.ctx.save();
-    canvasor.ctx.setTransform(
-        horizontal ? -1 : 1, 0,
-        0, vertical ? -1 : 1,
-        x + (horizontal ? image.width : 0),
-        y + (vertical ? image.height : 0)
-    );
-    canvasor.ctx.drawImage(image, -this.translateOffsetX, 0);
-    canvasor.ctx.restore();
   }
 
 }

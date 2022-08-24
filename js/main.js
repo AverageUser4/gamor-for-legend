@@ -2,7 +2,7 @@
 
 let levelor = new Levelor({
   backgroundSrc: 'backgrounds/village.jpg',
-  levelSize: 10,
+  levelSize: 5,
   enemyImagesSources: [
     {
       enemySrc: 'characters/villager.png',

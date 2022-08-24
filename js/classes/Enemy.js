@@ -40,8 +40,10 @@
     this.image = image;
     this.weaponImage = weaponImage;
 
+    this.damageTakenY = -1000;
+
     this.speed = Math.floor(Math.random() * 6) + 1;
-    this.distanceToKeep = Math.floor(Math.random() * 201) + 200;
+    this.distanceToKeep = Math.floor(Math.random() * 181) + 120;
   }
 
   logic(playerX, mapEndX) {
@@ -76,6 +78,9 @@
     else
       this.direction = 'right';
     
+    // visible taken damage
+    this.damageTakenY -= 5;
+
     // attack
     //if(something)
       //this.attack();
@@ -104,6 +109,25 @@
       this.health = 0;
       this.isDead = true;
     }
+
+    this.damage = damage;
+    this.damageTakenY = this.y + 20;
+  }
+
+  draw(translateOffsetX) {
+    if(this.direction === 'right')
+      canvasor.ctx.drawImage(this.image, this.x, this.y);
+    else
+      canvasor.mirrorImage(this.image, this.x, this.y, true, false, translateOffsetX);
+
+    // taken damage
+    canvasor.ctx.fillStyle = 'red';
+    canvasor.ctx.fillText(`-${this.damageTaken}`, this.x + 5, this.damageTakenY);
+
+    // debug
+    canvasor.ctx.strokeStyle = 'red';
+    // temporary
+    canvasor.ctx.strokeRect(this.x, this.y, this.width, this.height);
   }
 
 }
