@@ -21,8 +21,3 @@ function gameLoop() {
 }
 
 setInterval(() => gameLoop(), 33);
-
-/*
-  dodać ataki przeciwników
-  zrobić obiekt 'zadane obrażenia', żeby był widoczny nawet po śmierci przeciwnika
-*/

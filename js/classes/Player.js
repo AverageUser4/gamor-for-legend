@@ -12,6 +12,7 @@ class Player {
   #direction = 'right';
   image;
   damage = 15;
+  bullet;
 
   get x() {
     return this.#x;
@@ -32,12 +33,16 @@ class Player {
   // returned after logic
   shouldRedraw = false;
 
-  constructor(x, y, width, height, image) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
+  constructor(image, bulletImage) {
     this.image = image;
+
+    this.width = image.naturalWidth;
+    this.height = image.naturalHeight;
+
+    this.x = 0;
+    this.y = canvasor.height - this.height;
+
+    this.bullet = new Bullet(bulletImage, this.height);
   }
 
   logic(mapEndX, playerBulletCooldown) {

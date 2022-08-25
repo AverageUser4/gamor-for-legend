@@ -1,6 +1,6 @@
 'use strict';
 
-class DamageTaken {
+class HealOrDamage {
 
   // should always redraw when there is at least
   // one instance of this class
@@ -8,12 +8,14 @@ class DamageTaken {
   x;
   y;
   amount;
+  healOrDamage;
   opacity = 1;
 
-  constructor(x, y, amount) {
+  constructor(healOrDamage, x, y, amount) {
     this.x = x;
     this.y = y;
     this.amount = amount;
+    this.healOrDamage = healOrDamage;
   }
 
   logic() {
@@ -26,8 +28,14 @@ class DamageTaken {
   draw() {
     canvasor.ctx.globalAlpha = this.opacity;
 
-    canvasor.ctx.fillStyle = 'red';
-    canvasor.ctx.fillText(`-${this.amount} HP!`, this.x, this.y);
+    if(this.healOrDamage === 'damage') {
+      canvasor.ctx.fillStyle = 'red';
+      canvasor.ctx.fillText(`-${this.amount} HP!`, this.x, this.y);
+    }
+    else {
+      canvasor.ctx.fillStyle = 'green';
+      canvasor.ctx.fillText(`+${this.amount} HP!`, this.x, this.y);
+    }
 
     canvasor.ctx.globalAlpha = 1;
   }

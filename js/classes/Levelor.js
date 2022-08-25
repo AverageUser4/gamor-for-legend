@@ -11,7 +11,6 @@ class Levelor {
 
   // player
   player
-  playerBullet;
 
   // drawing
   shouldRedraw = true;
@@ -24,6 +23,7 @@ class Levelor {
   playerOffsetMoveBackgroundStart = 300;
 
   // enemies
+  enemyKinds = [];
   allEnemies = [];
 
   // damages taken
@@ -38,7 +38,7 @@ class Levelor {
     if(Object.hasOwn(options, 'levelSize'))
       this.backgroundRepeatCount = options.levelSize;
 
-    this.resourcor = new Resourcor(this);
+    this.resourcor = new Resourcor();
 
     this.promiseArray.push(this.resourcor.requestImage('backgroundImage', options.backgroundSrc));
     this.promiseArray.push(this.resourcor.requestImage('playerImage', 'characters/player.png'));
@@ -47,22 +47,58 @@ class Levelor {
       this.promiseArray.push(this.resourcor.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc));
 
     Promise.all(this.promiseArray)
-      .then(() => this.resourcor.onAllLoaded())
+      .then(() => this.onAllLoaded())
       .catch((src) => {
+        // it can catch error in onAllLoaded()
         throw new Error(`Unable to load image: ${src}`);
       });
   }
 
+  onAllLoaded() {
+    this.backgroundWidth = this.resourcor.backgroundImage.naturalWidth;
+    this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
+
+    this.player = new Player(this.resourcor.playerImage, this.resourcor.playerBulletImage);
+    
+    for(let i = 0; i < this.resourcor.enemyImages.length; i++) {
+      let w = this.resourcor.enemyImages[i].naturalWidth;
+      let h = this.resourcor.enemyImages[i].naturalHeight;
+      this.enemyKinds.push({ 
+        image: this.resourcor.enemyImages[i],
+        bulletImage: this.resourcor.enemyWeaponImages[i],
+        width: w,
+        height: h
+      });
+    }
+    
+    for(let i = 0; i < 5; i++)
+      this.spawnEnemy();
+
+    this.shouldRedraw = true;
+    this.draw();
+
+    this.ready = true;
+  }
+
+  spawnEnemy(enemyKindIndex, x = 500) {
+    if(typeof enemyKindIndex === 'undefined')
+      enemyKindIndex = Math.floor(Math.random() * this.enemyKinds.length);
+
+    const kind = this.enemyKinds[enemyKindIndex];
+
+    this.allEnemies.push(new Enemy(kind.image, kind.bulletImage, this.player.speed, x));    
+  }
+
   gameLoopIteration() {
-    let returnObject = this.player.logic(this.mapEndX, this.playerBullet.cooldown);
+    let returnObject = this.player.logic(this.mapEndX, this.player.bullet.cooldown);
     if(returnObject.shouldRedraw)
       this.shouldRedraw = true;
     if(returnObject.shouldAttack)
-      this.playerBullet.getThrown(this.player.x, this.player.direction);
+      this.player.bullet.getThrown(this.player.x, this.player.direction);
     
     this.cameraMovement();
 
-    returnObject = this.playerBullet.logic(this.allEnemies);
+    returnObject = this.player.bullet.logic(this.allEnemies);
     if(returnObject.shouldRedraw)
       this.shouldRedraw = true;
     if(Object.hasOwn(returnObject, 'i')) {
@@ -71,7 +107,7 @@ class Levelor {
       const dealt = this.allEnemies[i].getDamaged(this.player.damage);
 
       this.allDamagesTaken.push(
-        new DamageTaken(this.allEnemies[i].x, this.allEnemies[i].y, dealt));
+        new HealOrDamage('damage', this.allEnemies[i].x, this.allEnemies[i].y, dealt));
 
       if(this.allEnemies[i].isDead)
         this.allEnemies.splice(i, 1);
@@ -114,7 +150,7 @@ class Levelor {
     for(let val of this.allEnemies)
       val.draw(this.translateOffsetX);
 
-    this.playerBullet.draw(this.translateOffsetX);
+    this.player.bullet.draw(this.translateOffsetX);
 
     for(let val of this.allDamagesTaken)
       val.draw(); 
@@ -173,13 +209,13 @@ class Levelor {
 
     // fatigue
     canvasor.ctx.fillStyle = 'yellow';
-    fillAmount = this.playerBullet.cooldown / this.playerBullet.cooldownMax * 325;
+    fillAmount = this.player.bullet.cooldown / this.player.bullet.cooldownMax * 325;
     canvasor.ctx.fillRect(-this.translateOffsetX + 410, 6, fillAmount, 40);
 
     canvasor.ctx.strokeRect(-this.translateOffsetX + 410, 6, 325, 40);
 
     canvasor.ctx.fillStyle = '#111';
-    canvasor.ctx.fillText(`FP: ${this.playerBullet.cooldown} / ${this.playerBullet.cooldownMax}`,
+    canvasor.ctx.fillText(`FP: ${this.player.bullet.cooldown} / ${this.player.bullet.cooldownMax}`,
       -this.translateOffsetX + 425, 32);
 
     // status effect

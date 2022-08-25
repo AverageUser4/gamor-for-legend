@@ -10,7 +10,6 @@
   direction = 'left';
   health = 40;
   isDead = false;
-  spawnOriginX;
   distanceToKeep = 300;
 
   // bullet
@@ -30,17 +29,18 @@
   image;
   weaponImage;
 
-  constructor(x, y, width, height, image, weaponImage) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.spawnOriginX = x;
-
+  constructor(image, weaponImage, playerSpeed, x = 500) {
     this.image = image;
+
+    this.width = image.naturalWidth;
+    this.height = image.naturalHeight;
+
+    this.x = x;
+    this.y = canvasor.height - this.height;
+
     this.weaponImage = weaponImage;
 
-    this.speed = Math.floor(Math.random() * 6) + 1;
+    this.speed = Math.floor(Math.random() * (playerSpeed - 2)) + 2;
     this.distanceToKeep = Math.floor(Math.random() * 181) + 120;
   }
 
@@ -56,7 +56,7 @@
         this.x += this.speed;
 
       returnValue = true;
-    } else if(distance < this.distanceToKeep - this.speed) {
+    } else if(distance < this.distanceToKeep - this.speed * 2) {
       if(this.x > playerX)
         this.x += this.speed;
       else

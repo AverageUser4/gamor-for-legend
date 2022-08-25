@@ -31,13 +31,15 @@ class Bullet {
     this.shouldRedraw = true;
   }
 
-  constructor(x, y, width, height, image) {
-    this.x = x;
-    this.y = y;
-    this.yBase = y;
-    this.width = width;
-    this.height = height;
+  constructor(image, ownerHeight) {
     this.image = image;
+
+    this.width = image.naturalWidth;
+    this.height = image.naturalHeight;
+
+    this.x = -1000;
+    this.y = canvasor.height - this.height - ownerHeight / 2;
+    this.yBase = this.y;
   }
 
   getThrown(playerX, playerDirection) {
