@@ -2,6 +2,9 @@
 
 class Levelor {
 
+  // loading
+  resourcor;
+
   // metadata
   ready = false;
 
@@ -12,22 +15,12 @@ class Levelor {
   // drawing
   shouldRedraw = true;
 
-  // loading
-  loadIntervalId;
-  needToBeLoadedCount = 0;
-  backgroundImage;
-  backgroundWidth;
-  playerImage;
-  playerBulletImage;
-  enemyImages = [];
-  enemyWeaponImages = [];
-  loadingAttemptCount = 0;
-
   // background, position, etc.
-  playerOffsetMoveBackgroundStart = 300;
-  mapEndX;
+  backgroundWidth;
   backgroundRepeatCount = 1;
+  mapEndX;
   translateOffsetX = 0;
+  playerOffsetMoveBackgroundStart = 300;
 
   // enemies
   allEnemies = [];
@@ -41,75 +34,13 @@ class Levelor {
     if(Object.hasOwn(options, 'levelSize'))
       this.backgroundRepeatCount = options.levelSize;
 
-    canvasor.ctx = canvasor.ctx;
+    this.resourcor = new Resourcor(this);
 
-    this.requestImage('backgroundImage', options.backgroundSrc);
-    this.requestImage('playerImage', 'characters/player.png');
-    this.requestImage('playerBulletImage', 'weapons/dagger.png');
+    this.resourcor.requestImage('backgroundImage', options.backgroundSrc);
+    this.resourcor.requestImage('playerImage', 'characters/player.png');
+    this.resourcor.requestImage('playerBulletImage', 'weapons/dagger.png');
     for(let val of options.enemyImagesSources)
-      this.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc);
-
-    this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
-  }
-
-  requestImage(propertyName, src) {
-    this.needToBeLoadedCount++;
-    this[propertyName] = new Image();
-    this[propertyName].src = src;
-    this[propertyName].addEventListener('load', 
-      () => this.needToBeLoadedCount--, { once: true });
-  }
-
-  requestEnemyAndEnemyWeaponImages(enemySrc, weaponSrc) {
-    this.needToBeLoadedCount += 2;
-
-    this.enemyImages.push(new Image());
-    this.enemyImages[this.enemyImages.length - 1].src = enemySrc;
-    this.enemyImages[this.enemyImages.length - 1].addEventListener('load', 
-      () => this.needToBeLoadedCount--, { once: true });
-
-    this.enemyWeaponImages.push(new Image());
-    this.enemyWeaponImages[this.enemyWeaponImages.length - 1].src = weaponSrc;
-    this.enemyWeaponImages[this.enemyWeaponImages.length - 1].addEventListener('load', 
-      () => this.needToBeLoadedCount--, { once: true });
-  }
-
-  checkResourcesLoaded() {
-    this.loadingAttemptCount++;
-    if(this.loadingAttemptCount >= 50)
-      throw new Error('Failed to load required resources.');
-    if(this.needToBeLoadedCount > 0)
-      return;
-
-    clearInterval(this.loadIntervalId);
-
-    this.backgroundWidth = this.backgroundImage.naturalWidth;
-    this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
-
-    let w = this.playerImage.naturalWidth;
-    let h = this.playerImage.naturalHeight;
-    this.player = new Player(0, canvasor.height - h, w, h, this.playerImage);
-
-    w = this.playerBulletImage.naturalWidth;
-    h = this.playerBulletImage.naturalHeight;
-    const y = canvasor.height - h - this.playerImage.naturalHeight / 2;
-    this.playerBullet = new Bullet(-1000, y, w, h, this.playerBulletImage);
-    
-    w = this.enemyImages[0].naturalWidth;
-    h = this.enemyImages[0].naturalHeight;
-    this.allEnemies.push(new Enemy(500, canvasor.height - h, w, h, this.enemyImages[0], this.enemyWeaponImages[0]));
-    this.allEnemies.push(new Enemy(600, canvasor.height - h, w, h, this.enemyImages[0], this.enemyWeaponImages[0]));
-
-    w = this.enemyImages[1].naturalWidth;
-    h = this.enemyImages[1].naturalHeight;
-    this.allEnemies.push(new Enemy(700, canvasor.height - h, w, h, this.enemyImages[1], this.enemyWeaponImages[0]));
-    this.allEnemies.push(new Enemy(800, canvasor.height - h, w, h, this.enemyImages[1], this.enemyWeaponImages[0]));
-    this.allEnemies.push(new Enemy(900, canvasor.height - h, w, h, this.enemyImages[1], this.enemyWeaponImages[0]));
-
-    this.shouldRedraw = true;
-    this.draw();
-
-    this.ready = true;
+      this.resourcor.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc);
   }
 
   gameLoopIteration() {
@@ -154,24 +85,12 @@ class Levelor {
 
     this.player.draw(this.translateOffsetX);
 
-    for(let val of this.allEnemies) {
+    for(let val of this.allEnemies)
       val.draw(this.translateOffsetX);
-    }
 
     this.playerBullet.draw(this.translateOffsetX);
 
     canvasor.ctx.restore();
-  }
-
-  cameraMovement() {
-    if(this.player.x < this.playerOffsetMoveBackgroundStart)
-      return;
-
-    this.translateOffsetX = -this.player.x + this.playerOffsetMoveBackgroundStart;
-
-    const checkTranslate = this.backgroundWidth * -this.backgroundRepeatCount + canvasor.width;
-    if(this.translateOffsetX < checkTranslate)
-      this.translateOffsetX = checkTranslate;
   }
 
   drawBackground() {
@@ -186,7 +105,7 @@ class Levelor {
         )
           continue; 
 
-      canvasor.ctx.drawImage(this.backgroundImage, x, 0);
+      canvasor.ctx.drawImage(this.resourcor.backgroundImage, x, 0);
     }
   }
 
@@ -203,7 +122,7 @@ class Levelor {
 
     canvasor.ctx.save();
     canvasor.ctx.scale(0.43, 0.43);
-    canvasor.ctx.drawImage(this.playerImage, -this.translateOffsetX * 2.3256 + 19, 10);
+    canvasor.ctx.drawImage(this.resourcor.playerImage, -this.translateOffsetX * 2.3256 + 19, 10);
     canvasor.ctx.restore();
 
     canvasor.ctx.lineWidth = 2;
@@ -240,6 +159,17 @@ class Levelor {
     canvasor.ctx.strokeRect(-this.translateOffsetX + 755, 6, 40, 40);
     canvasor.ctx.font = '24px sans-serif';
     canvasor.ctx.fillText('🚫', -this.translateOffsetX + 763, 35);
+  }
+
+  cameraMovement() {
+    if(this.player.x < this.playerOffsetMoveBackgroundStart)
+      return;
+
+    this.translateOffsetX = -this.player.x + this.playerOffsetMoveBackgroundStart;
+
+    const checkTranslate = this.backgroundWidth * -this.backgroundRepeatCount + canvasor.width;
+    if(this.translateOffsetX < checkTranslate)
+      this.translateOffsetX = checkTranslate;
   }
 
 }
