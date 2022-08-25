@@ -21,3 +21,6 @@ function gameLoop() {
 }
 
 setInterval(() => gameLoop(), 33);
+
+// enemy can die, that will cause issue with flying bullet
+// when player is moving or enemy is too far away the bullet is bugged

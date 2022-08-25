@@ -45,7 +45,7 @@ class Player {
     this.bullet = new Bullet(bulletImage, this.height);
   }
 
-  logic(mapEndX, playerBulletCooldown) {
+  logic(mapEndX) {
     const returnObject = { shouldRedraw: false, shouldAttack: false };
 
     // movement
@@ -71,7 +71,7 @@ class Player {
 
     // attack
     if(
-        playerBulletCooldown <= 0 && 
+        this.bullet.cooldown <= 0 && 
         (interactor.isPressed(' ') || interactor.isPressedMouse())
       )
         returnObject.shouldAttack = true;

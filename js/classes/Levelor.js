@@ -90,7 +90,7 @@ class Levelor {
   }
 
   gameLoopIteration() {
-    let returnObject = this.player.logic(this.mapEndX, this.player.bullet.cooldown);
+    let returnObject = this.player.logic(this.mapEndX);
     if(returnObject.shouldRedraw)
       this.shouldRedraw = true;
     if(returnObject.shouldAttack)
@@ -113,9 +113,13 @@ class Levelor {
         this.allEnemies.splice(i, 1);
     }
 
-    for(let val of this.allEnemies)
-      if(val.logic(this.player.x, this.mapEndX))
+    for(let val of this.allEnemies) {
+      if(
+          val.logic(this.player.x, this.mapEndX) ||
+          val.bullet.logic([this.player]).shouldRedraw
+        )
         this.shouldRedraw = true;
+    }
 
     const toBeSpliced = [];
     for(let val of this.allDamagesTaken) {
@@ -151,6 +155,9 @@ class Levelor {
       val.draw(this.translateOffsetX);
 
     this.player.bullet.draw(this.translateOffsetX);
+
+    for(let val of this.allEnemies)
+      val.bullet.draw(this.translateOffsetX);
 
     for(let val of this.allDamagesTaken)
       val.draw(); 

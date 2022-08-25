@@ -42,20 +42,20 @@ class Bullet {
     this.yBase = this.y;
   }
 
-  getThrown(playerX, playerDirection) {
+  getThrown(throwerX, throwerDirection) {
     this.canDamage = true;
     this.y = this.yBase;
 
     this.cooldown = this.cooldownMax;
 
-    this.x = playerX;
+    this.x = throwerX;
     this.speed = this.speedBase;
 
-    if(playerDirection === 'left')
+    if(throwerDirection === 'left')
       this.speed *= -1;
   }
 
-  logic(allEnemies) {
+  logic(allTargets) {
     const returnObject = { shouldRedraw: false };
 
     if(this.cooldown <= 0)
@@ -77,10 +77,10 @@ class Bullet {
       return { shouldRedraw: true };
     }
 
-    for(let i = 0; i < allEnemies.length; i++) {
+    for(let i = 0; i < allTargets.length; i++) {
       if(
-          this.x + this.width - 35 >= allEnemies[i].x &&
-          this.x <= allEnemies[i].x + allEnemies[i].width 
+          this.x + this.width - 35 >= allTargets[i].x &&
+          this.x <= allTargets[i].x + allTargets[i].width 
         ) {
           this.canDamage = false;
           returnObject.i = i;
