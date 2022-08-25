@@ -4,6 +4,7 @@ class Levelor {
 
   // loading
   resourcor;
+  promiseArray = [];
 
   // metadata
   ready = false;
@@ -25,6 +26,9 @@ class Levelor {
   // enemies
   allEnemies = [];
 
+  // damages taken
+  allDamagesTaken = [];
+
   constructor(options) {
     if(!Object.hasOwn(options, 'backgroundSrc'))
       throw new Error('No background source provided in options object of Levelor constuctor.');
@@ -36,11 +40,17 @@ class Levelor {
 
     this.resourcor = new Resourcor(this);
 
-    this.resourcor.requestImage('backgroundImage', options.backgroundSrc);
-    this.resourcor.requestImage('playerImage', 'characters/player.png');
-    this.resourcor.requestImage('playerBulletImage', 'weapons/dagger.png');
+    this.promiseArray.push(this.resourcor.requestImage('backgroundImage', options.backgroundSrc));
+    this.promiseArray.push(this.resourcor.requestImage('playerImage', 'characters/player.png'));
+    this.promiseArray.push(this.resourcor.requestImage('playerBulletImage', 'weapons/dagger.png'));
     for(let val of options.enemyImagesSources)
-      this.resourcor.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc);
+      this.promiseArray.push(this.resourcor.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc));
+
+    Promise.all(this.promiseArray)
+      .then(() => this.resourcor.onAllLoaded())
+      .catch((src) => {
+        throw new Error(`Unable to load image: ${src}`);
+      });
   }
 
   gameLoopIteration() {
@@ -56,15 +66,31 @@ class Levelor {
     if(returnObject.shouldRedraw)
       this.shouldRedraw = true;
     if(Object.hasOwn(returnObject, 'i')) {
-      this.allEnemies[returnObject.i].getDamaged(66);
-      if(this.allEnemies[returnObject.i].isDead)
-        this.allEnemies.splice(returnObject.i, 1);
+      const i = returnObject.i;
+
+      const dealt = this.allEnemies[i].getDamaged(this.player.damage);
+
+      this.allDamagesTaken.push(
+        new DamageTaken(this.allEnemies[i].x, this.allEnemies[i].y, dealt));
+
+      if(this.allEnemies[i].isDead)
+        this.allEnemies.splice(i, 1);
     }
 
-    for(let val of this.allEnemies) {
+    for(let val of this.allEnemies)
       if(val.logic(this.player.x, this.mapEndX))
         this.shouldRedraw = true;
+
+    const toBeSpliced = [];
+    for(let val of this.allDamagesTaken) {
+      val.logic();
+      this.shouldRedraw = true;
+      if(val.opacity === 0)
+        toBeSpliced.push(val);
     }
+
+    for(let val of toBeSpliced)
+      this.allDamagesTaken.splice(this.allDamagesTaken.indexOf(val), 1);
 
     this.draw();
   }
@@ -89,6 +115,9 @@ class Levelor {
       val.draw(this.translateOffsetX);
 
     this.playerBullet.draw(this.translateOffsetX);
+
+    for(let val of this.allDamagesTaken)
+      val.draw(); 
 
     canvasor.ctx.restore();
   }

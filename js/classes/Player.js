@@ -11,6 +11,7 @@ class Player {
   y = 500;
   #direction = 'right';
   image;
+  damage = 15;
 
   get x() {
     return this.#x;

@@ -2,11 +2,6 @@
 
 class Resourcor {
 
-  // loading
-  loadIntervalId;
-  needToBeLoadedCount = 0;
-  loadingAttemptCount = 0;
-
   // resources
   backgroundImage;
   playerImage;
@@ -19,42 +14,56 @@ class Resourcor {
 
   constructor(levelor) {
     this.levelor = levelor;
-
-    this.loadIntervalId = setInterval(() => this.checkResourcesLoaded(), 100);
   }
 
   requestImage(propertyName, src) {
-    this.needToBeLoadedCount++;
-    this[propertyName] = new Image();
-    this[propertyName].src = src;
-    this[propertyName].addEventListener('load', 
-      () => this.needToBeLoadedCount--, { once: true });
+    return new Promise((resolve, reject) => {
+      this[propertyName] = new Image();
+      this[propertyName].src = src;
+      this[propertyName].addEventListener('load', 
+        () => resolve(), { once: true });
+      this[propertyName].addEventListener('error', 
+        () => reject(src), { once: true });
+    });
   }
 
   requestEnemyAndEnemyWeaponImages(enemySrc, weaponSrc) {
-    this.needToBeLoadedCount += 2;
+    let loadedCount = 0;
 
-    this.enemyImages.push(new Image());
-    this.enemyImages[this.enemyImages.length - 1].src = enemySrc;
-    this.enemyImages[this.enemyImages.length - 1].addEventListener('load', 
-      () => this.needToBeLoadedCount--, { once: true });
+    return new Promise((resolve, reject) => {
+      this.enemyImages.push(new Image());
+      this.enemyImages[this.enemyImages.length - 1].src = enemySrc;
 
-    this.enemyWeaponImages.push(new Image());
-    this.enemyWeaponImages[this.enemyWeaponImages.length - 1].src = weaponSrc;
-    this.enemyWeaponImages[this.enemyWeaponImages.length - 1].addEventListener('load', 
-      () => this.needToBeLoadedCount--, { once: true });
+      this.enemyImages[this.enemyImages.length - 1].addEventListener('load', 
+        () => {
+          loadedCount++;
+          if(loadedCount === 2)
+            resolve();
+        }, { once: true });
+
+      this.enemyImages[this.enemyImages.length - 1].addEventListener('error',
+        () => {
+          reject(enemySrc);
+        }, { once: true });
+  
+      this.enemyWeaponImages.push(new Image());
+      this.enemyWeaponImages[this.enemyWeaponImages.length - 1].src = weaponSrc;
+
+      this.enemyWeaponImages[this.enemyWeaponImages.length - 1].addEventListener('load', 
+        () => {
+          loadedCount++;
+          if(loadedCount === 2)
+            resolve();
+        }, { once: true });
+        
+      this.enemyWeaponImages[this.enemyWeaponImages.length - 1].addEventListener('error',
+        () => {
+          reject(weaponSrc);
+        }, { once: true });
+    });
   }
 
-  checkResourcesLoaded() {
-    this.loadingAttemptCount++;
-    if(this.loadingAttemptCount >= 50)
-      throw new Error('Failed to load required resources.');
-
-    if(this.needToBeLoadedCount > 0)
-      return;
-
-    clearInterval(this.loadIntervalId);
-
+  onAllLoaded() {
     this.levelor.backgroundWidth = this.backgroundImage.naturalWidth;
     this.levelor.mapEndX = this.levelor.backgroundRepeatCount * this.levelor.backgroundWidth;
 
