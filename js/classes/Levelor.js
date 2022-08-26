@@ -27,7 +27,7 @@ class Levelor {
   allEnemies = [];
 
   // damages taken
-  allDamagesTaken = [];
+  allDamagesOrHeals = [];
 
   constructor(options) {
     if(!Object.hasOwn(options, 'backgroundSrc'))
@@ -90,23 +90,22 @@ class Levelor {
   }
 
   gameLoopIteration() {
-    let returnObject = this.player.logic(this.mapEndX);
-    if(returnObject.shouldRedraw)
+    if(this.player.logic(this.mapEndX))
       this.shouldRedraw = true;
-    if(returnObject.shouldAttack)
-      this.player.bullet.getThrown(this.player.x, this.player.direction);
     
     this.cameraMovement();
 
-    returnObject = this.player.bullet.logic(this.allEnemies);
+    let returnObject = this.player.bullet.logic(this.allEnemies);
+
     if(returnObject.shouldRedraw)
       this.shouldRedraw = true;
+
     if(Object.hasOwn(returnObject, 'i')) {
       const i = returnObject.i;
 
       const dealt = this.allEnemies[i].getDamaged(this.player.damage);
 
-      this.allDamagesTaken.push(
+      this.allDamagesOrHeals.push(
         new HealOrDamage('damage', this.allEnemies[i].x, this.allEnemies[i].y, dealt));
 
       if(this.allEnemies[i].isDead)
@@ -114,15 +113,24 @@ class Levelor {
     }
 
     for(let val of this.allEnemies) {
-      if(
-          val.logic(this.player.x, this.mapEndX) ||
-          val.bullet.logic([this.player]).shouldRedraw
-        )
+      if(val.logic(this.player.x, this.mapEndX))
         this.shouldRedraw = true;
+
+      returnObject = val.bullet.logic([this.player]);
+
+      if(returnObject.shouldRedraw)
+        this.shouldRedraw = true;
+
+      if(Object.hasOwn(returnObject, 'i')) {
+        const dealt = this.player.getDamaged(val.damage);
+
+        this.allDamagesOrHeals.push(
+          new HealOrDamage('damage', this.player.x, this.player.y, dealt));
+      }
     }
 
     const toBeSpliced = [];
-    for(let val of this.allDamagesTaken) {
+    for(let val of this.allDamagesOrHeals) {
       val.logic();
       this.shouldRedraw = true;
       if(val.opacity === 0)
@@ -130,7 +138,7 @@ class Levelor {
     }
 
     for(let val of toBeSpliced)
-      this.allDamagesTaken.splice(this.allDamagesTaken.indexOf(val), 1);
+      this.allDamagesOrHeals.splice(this.allDamagesOrHeals.indexOf(val), 1);
 
     this.draw();
   }
@@ -159,7 +167,7 @@ class Levelor {
     for(let val of this.allEnemies)
       val.bullet.draw(this.translateOffsetX);
 
-    for(let val of this.allDamagesTaken)
+    for(let val of this.allDamagesOrHeals)
       val.draw(); 
 
     canvasor.ctx.restore();

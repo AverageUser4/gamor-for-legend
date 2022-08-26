@@ -64,6 +64,9 @@ class Bullet {
     this.x += this.speed;
     this.cooldown--;
 
+    if(this.cooldown < this.cooldownMax * 0.2)
+      this.canDamage = false;
+
     if(this.cooldown <= 0) {
       this.x = -1000;
       return { shouldRedraw: true };
@@ -71,9 +74,9 @@ class Bullet {
 
     if(!this.canDamage) {
       if(this.speed > 0)
-        this.y += this.speed * 2;
+        this.y += this.speed;
       else
-        this.y -= this.speed * 2;
+        this.y -= this.speed;
       return { shouldRedraw: true };
     }
 

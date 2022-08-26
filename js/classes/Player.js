@@ -46,8 +46,6 @@ class Player {
   }
 
   logic(mapEndX) {
-    const returnObject = { shouldRedraw: false, shouldAttack: false };
-
     // movement
     if(interactor.isPressed('a') || interactor.isPressed('ArrowLeft')) {
       this.x -= this.speed;
@@ -74,14 +72,23 @@ class Player {
         this.bullet.cooldown <= 0 && 
         (interactor.isPressed(' ') || interactor.isPressedMouse())
       )
-        returnObject.shouldAttack = true;
+        this.bullet.getThrown(this.x, this.direction);
 
+    // should redraw
     if(this.shouldRedraw) {
-      returnObject.shouldRedraw = true;
       this.shouldRedraw = false;
+      return true;
+    }
+  }
+
+  getDamaged(damage) {
+    this.health -= damage;
+    if(this.health <= 0) {
+      this.health = 0;
+      // this.isDead = true;
     }
 
-    return returnObject;
+    return damage;
   }
 
   draw(translateOffsetX) {

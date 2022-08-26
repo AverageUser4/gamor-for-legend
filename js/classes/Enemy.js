@@ -14,6 +14,7 @@
   state = 'neutral';
   fightsBack = true;
   bullet;
+  damage = 10;
 
   // images
   image;
@@ -39,8 +40,6 @@
     this.direction = Math.floor(Math.random() * 2) ? 'left' : 'right';
 
     this.bullet = new Bullet(bulletImage, this.height);
-
-    // window.addEventListener('click', () => this.bullet.getThrown(this.x, this.direction))
   }
 
   logic(playerX, mapEndX) {
@@ -116,17 +115,13 @@
     else
       this.direction = 'right';
     
-    // attack
-    //if(something)
-      //this.attack();
-    if(this.bullet.cooldown <= 0)
-      this.bullet.getThrown(this.x, this.direction);
+    if(
+        this.bullet.cooldown <= 0 &&
+        !Math.floor(Math.random() * 20)
+      )
+        this.bullet.getThrown(this.x, this.direction);
 
     return shouldRedraw;
-  }
-
-  attack() {
-
   }
 
   bulletLogic() {
