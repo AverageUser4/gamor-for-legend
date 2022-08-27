@@ -2,6 +2,7 @@
 
 class Player {
 
+  ready = false;
   healthMax = 100;
   health = 100;
   speed = 7;
@@ -33,16 +34,27 @@ class Player {
   // returned after logic
   shouldRedraw = false;
 
-  constructor(image, bulletImage) {
-    this.image = image;
+  constructor(kind) {
+    this.image = new Image();
 
-    this.width = image.naturalWidth;
-    this.height = image.naturalHeight;
+    this.image.addEventListener('load', () => {
+      this.furtherConstruction(kind);
+    });
+    this.image.addEventListener('error', () => console.error(`Couldn\'t load enemy\'s image: ${kind}`));
+
+    this.image.src = `characters/${kind}.png`;
+  }
+
+  furtherConstruction(kind) {
+    this.width = this.image.naturalWidth;
+    this.height = this.image.naturalHeight;
 
     this.x = 0;
     this.y = canvasor.height - this.height;
 
-    this.bullet = new Bullet(bulletImage, this.height);
+    this.bullet = new Bullet(kind, this.height);
+
+    this.ready = true;
   }
 
   logic(mapEndX) {
@@ -64,8 +76,8 @@ class Player {
 
     if(this.x < 0)
       this.x = 0;
-    if(this.x + this.playerWidth > mapEndX)
-      this.x = mapEndX - this.playerWidth;
+    if(this.x + this.width > mapEndX)
+      this.x = mapEndX - this.width;
 
     // attack
     if(

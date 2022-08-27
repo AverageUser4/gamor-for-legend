@@ -13,6 +13,10 @@ let levelor = new Levelor({
       weaponSrc: 'weapons/dagger.png'
     }, 
   ],
+  playerImagesSources: {
+    playerSrc: 'characters/warrior.png',
+    weaponSrc: 'weapons/warrior-bullet.png'
+  }
 });
 
 function gameLoop() {
@@ -21,6 +25,3 @@ function gameLoop() {
 }
 
 setInterval(() => gameLoop(), 33);
-
-// enemy can die, that will cause issue with flying bullet
-// when player is moving or enemy is too far away the bullet is bugged

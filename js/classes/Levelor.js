@@ -6,9 +6,6 @@ class Levelor {
   resourcor;
   promiseArray = [];
 
-  // metadata
-  ready = false;
-
   // player
   player
 
@@ -23,11 +20,14 @@ class Levelor {
   playerOffsetMoveBackgroundStart = 300;
 
   // enemies
-  enemyKinds = [];
+  enemyLimit = 20;
   allEnemies = [];
 
   // damages taken
   allDamagesOrHeals = [];
+
+  // used by invoking script
+  ready = false;
 
   constructor(options) {
     if(!Object.hasOwn(options, 'backgroundSrc'))
@@ -41,10 +41,6 @@ class Levelor {
     this.resourcor = new Resourcor();
 
     this.promiseArray.push(this.resourcor.requestImage('backgroundImage', options.backgroundSrc));
-    this.promiseArray.push(this.resourcor.requestImage('playerImage', 'characters/player.png'));
-    this.promiseArray.push(this.resourcor.requestImage('playerBulletImage', 'weapons/dagger.png'));
-    for(let val of options.enemyImagesSources)
-      this.promiseArray.push(this.resourcor.requestEnemyAndEnemyWeaponImages(val.enemySrc, val.weaponSrc));
 
     Promise.all(this.promiseArray)
       .then(() => this.onAllLoaded())
@@ -58,35 +54,21 @@ class Levelor {
     this.backgroundWidth = this.resourcor.backgroundImage.naturalWidth;
     this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
-    this.player = new Player(this.resourcor.playerImage, this.resourcor.playerBulletImage);
+    this.player = new Player('warrior');
     
-    for(let i = 0; i < this.resourcor.enemyImages.length; i++) {
-      let w = this.resourcor.enemyImages[i].naturalWidth;
-      let h = this.resourcor.enemyImages[i].naturalHeight;
-      this.enemyKinds.push({ 
-        image: this.resourcor.enemyImages[i],
-        bulletImage: this.resourcor.enemyWeaponImages[i],
-        width: w,
-        height: h
-      });
-    }
+    for(let i = 0; i < 3; i++)
+      this.spawnEnemy('villager', Math.floor(Math.random() * 450) + 250) ;
+
+    setTimeout(() => {
+      this.ready = true;
+      this.shouldRedraw = true;
+      this.draw();
+    }, 1000);
     
-    for(let i = 0; i < 5; i++)
-      this.spawnEnemy();
-
-    this.shouldRedraw = true;
-    this.draw();
-
-    this.ready = true;
   }
 
-  spawnEnemy(enemyKindIndex, x = 500) {
-    if(typeof enemyKindIndex === 'undefined')
-      enemyKindIndex = Math.floor(Math.random() * this.enemyKinds.length);
-
-    const kind = this.enemyKinds[enemyKindIndex];
-
-    this.allEnemies.push(new Enemy(kind.image, kind.bulletImage, this.player.speed, x));    
+  spawnEnemy(kind, x = 500, options) {
+    this.allEnemies.push(new Enemy(kind, x, this.player.speed, options));    
   }
 
   gameLoopIteration() {
@@ -202,7 +184,7 @@ class Levelor {
 
     canvasor.ctx.save();
     canvasor.ctx.scale(0.43, 0.43);
-    canvasor.ctx.drawImage(this.resourcor.playerImage, -this.translateOffsetX * 2.3256 + 19, 10);
+    canvasor.ctx.drawImage(this.player.image, -this.translateOffsetX * 2.3256 + 19, 10);
     canvasor.ctx.restore();
 
     canvasor.ctx.lineWidth = 2;

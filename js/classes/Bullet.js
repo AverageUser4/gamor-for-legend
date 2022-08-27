@@ -2,6 +2,7 @@
 
 class Bullet {
 
+  ready = false;
   canDamage = true;
   cooldownMax = 36;
   cooldown = 0;
@@ -31,15 +32,26 @@ class Bullet {
     this.shouldRedraw = true;
   }
 
-  constructor(image, ownerHeight) {
-    this.image = image;
+  constructor(kind, ownerHeight) {
+    this.image = new Image();
 
-    this.width = image.naturalWidth;
-    this.height = image.naturalHeight;
+    this.image.addEventListener('load', () => {
+      this.furtherConstruction(ownerHeight);
+    });
+    this.image.addEventListener('error', () => console.error(`Couldn\'t load weapon image: ${kind}`));
+
+    this.image.src = `weapons/${kind}-bullet.png`;
+  }
+
+  furtherConstruction(ownerHeight) {
+    this.width = this.image.naturalWidth;
+    this.height = this.image.naturalHeight;
 
     this.x = -1000;
     this.y = canvasor.height - this.height - ownerHeight / 2;
     this.yBase = this.y;
+
+    this.ready = true;
   }
 
   getThrown(throwerX, throwerDirection) {

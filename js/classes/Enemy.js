@@ -2,6 +2,7 @@
 
   class Enemy {
 
+  ready = false;
   speed = 5;
   width;
   height;
@@ -15,21 +16,25 @@
   fightsBack = true;
   bullet;
   damage = 10;
-
-  // images
   image;
-  bulletImage;
 
-  constructor(image, bulletImage, playerSpeed, x = 500, options) {
-    this.image = image;
+  constructor(kind, x, playerSpeed, options) {
+    this.image = new Image();
 
-    this.width = image.naturalWidth;
-    this.height = image.naturalHeight;
+    this.image.addEventListener('load', () => {
+      this.furtherConstruction(kind, x, playerSpeed, options);
+    });
+    this.image.addEventListener('error', () => console.error(`Couldn\'t load enemy\'s image: ${kind}`));
+
+    this.image.src = `characters/${kind}.png`;
+  }
+
+  furtherConstruction(kind, x, playerSpeed, options) {
+    this.width = this.image.naturalWidth;
+    this.height = this.image.naturalHeight;
 
     this.x = x;
     this.y = canvasor.height - this.height;
-
-    this.bulletImage = bulletImage;
 
     this.speed = Math.floor(Math.random() * (playerSpeed - 2)) + 2;
     this.distanceToKeep = Math.floor(Math.random() * 181) + 120;
@@ -39,7 +44,7 @@
 
     this.direction = Math.floor(Math.random() * 2) ? 'left' : 'right';
 
-    this.bullet = new Bullet(bulletImage, this.height);
+    this.bullet = new Bullet(kind, this.height);
   }
 
   logic(playerX, mapEndX) {
