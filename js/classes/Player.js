@@ -2,7 +2,6 @@
 
 class Player {
 
-  ready = false;
   healthMax = 100;
   health = 100;
   speed = 7;
@@ -40,21 +39,32 @@ class Player {
     this.image.addEventListener('load', () => {
       this.furtherConstruction(kind);
     });
-    this.image.addEventListener('error', () => console.error(`Couldn\'t load enemy\'s image: ${kind}`));
+    this.image.addEventListener('error', () => {
+      console.error(`Couldn\'t load player\'s image: ${kind}`);
+      this.furtherConstruction(kind, true);
+    });
 
     this.image.src = `characters/${kind}.png`;
   }
 
-  furtherConstruction(kind) {
-    this.width = this.image.naturalWidth;
-    this.height = this.image.naturalHeight;
+  furtherConstruction(kind, error = false) {
+    if(!error) {
+      this.width = this.image.naturalWidth;
+      this.height = this.image.naturalHeight;
+    } else {
+      this.width = bases.playerWidth;
+      this.height = bases.playerHeight;
+      this.image = null;
+    }
 
     this.x = 0;
     this.y = canvasor.height - this.height;
 
     this.bullet = new Bullet(kind, this.height);
 
-    this.ready = true;
+    this.bullet.image.addEventListener('ready', () => {
+      this.image.dispatchEvent(new Event('ready'));
+    });
   }
 
   logic(mapEndX) {
@@ -104,14 +114,21 @@ class Player {
   }
 
   draw(translateOffsetX) {
+    if(!this.image) {
+      canvasor.ctx.fillStyle = 'green';
+      canvasor.ctx.fillRect(this.x, this.y, this.width, this.height);
+      return;
+    }
+
     if(this.direction === 'right')
       canvasor.ctx.drawImage(this.image, this.x, this.y);
     else
       canvasor.mirrorImage(this.image, this.x, this.y, true, false, translateOffsetX);      
 
-    // debug
-    canvasor.ctx.strokeStyle = 'red';
-    canvasor.ctx.strokeRect(this.x, this.y, this.width, this.height);
+    if(debugor.debug) {
+      canvasor.ctx.strokeStyle = 'red';
+      canvasor.ctx.strokeRect(this.x, this.y, this.width, this.height);
+    }
   }
 
 }

@@ -2,9 +2,8 @@
 
 class Levelor {
 
-  // loading
-  resourcor;
-  promiseArray = [];
+  // resources
+  backgroundImage;
 
   // player
   player
@@ -32,26 +31,40 @@ class Levelor {
   constructor(options) {
     if(!Object.hasOwn(options, 'backgroundSrc'))
       throw new Error('No background source provided in options object of Levelor constuctor.');
-    if(!Object.hasOwn(options, 'enemyImagesSources'))
-      throw new Error('You need to provide image source for at least one enemy and its weapon');
 
     if(Object.hasOwn(options, 'levelSize'))
       this.backgroundRepeatCount = options.levelSize;
 
-    this.resourcor = new Resourcor();
-
-    this.promiseArray.push(this.resourcor.requestImage('backgroundImage', options.backgroundSrc));
-
-    Promise.all(this.promiseArray)
+    this.requestImage('backgroundImage', options.backgroundSrc)
       .then(() => this.onAllLoaded())
       .catch((src) => {
         // it can catch error in onAllLoaded()
-        throw new Error(`Unable to load image: ${src}`);
-      });
+        console.error(`Unable to load image: ${src}`);
+        this.onAllLoaded(true);
+      })
   }
 
-  onAllLoaded() {
-    this.backgroundWidth = this.resourcor.backgroundImage.naturalWidth;
+  requestImage(propertyName, src) {
+    return new Promise((resolve, reject) => {
+      this[propertyName] = new Image();
+      
+      this[propertyName].addEventListener('load', 
+        () => resolve(), { once: true });
+      this[propertyName].addEventListener('error', 
+        () => reject(src), { once: true });
+
+      this[propertyName].src = src;
+    });
+  }
+
+  onAllLoaded(error = false) {
+    if(error) {
+      this.backgroundWidth = bases.backgroundWidth;
+      this.backgroundImage = null;
+    }
+    else
+      this.backgroundWidth = this.backgroundImage.naturalWidth;
+
     this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
     this.player = new Player('warrior');
@@ -59,12 +72,11 @@ class Levelor {
     for(let i = 0; i < 3; i++)
       this.spawnEnemy('villager', Math.floor(Math.random() * 450) + 250) ;
 
-    setTimeout(() => {
+    this.player.image.addEventListener('ready', () => {
       this.ready = true;
       this.shouldRedraw = true;
       this.draw();
-    }, 1000);
-    
+    });
   }
 
   spawnEnemy(kind, x = 500, options) {
@@ -167,7 +179,12 @@ class Levelor {
         )
           continue; 
 
-      canvasor.ctx.drawImage(this.resourcor.backgroundImage, x, 0);
+      if(!this.backgroundImage) {
+        canvasor.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+        canvasor.ctx.fillRect(x, 0, canvasor.width, canvasor.height);
+      } else {
+        canvasor.ctx.drawImage(this.backgroundImage, x, 0);
+      }
     }
   }
 
@@ -182,10 +199,12 @@ class Levelor {
     canvasor.ctx.fillStyle = '#666';
     canvasor.ctx.fillRect(-this.translateOffsetX + 5, 6, 40, 40);
 
-    canvasor.ctx.save();
-    canvasor.ctx.scale(0.43, 0.43);
-    canvasor.ctx.drawImage(this.player.image, -this.translateOffsetX * 2.3256 + 19, 10);
-    canvasor.ctx.restore();
+    if(!this.player.noImage) {
+      canvasor.ctx.save();
+      canvasor.ctx.scale(0.43, 0.43);
+      canvasor.ctx.drawImage(this.player.image, -this.translateOffsetX * 2.3256 + 19, 10);
+      canvasor.ctx.restore();
+    }
 
     canvasor.ctx.lineWidth = 2;
     canvasor.ctx.strokeStyle = '#111';

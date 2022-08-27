@@ -2,7 +2,6 @@
 
 class Bullet {
 
-  ready = false;
   canDamage = true;
   cooldownMax = 36;
   cooldown = 0;
@@ -38,20 +37,29 @@ class Bullet {
     this.image.addEventListener('load', () => {
       this.furtherConstruction(ownerHeight);
     });
-    this.image.addEventListener('error', () => console.error(`Couldn\'t load weapon image: ${kind}`));
+    this.image.addEventListener('error', () => {
+      console.error(`Couldn\'t load weapon image: ${kind}`);
+      this.furtherConstruction(ownerHeight, true)
+    });
 
     this.image.src = `weapons/${kind}-bullet.png`;
   }
 
-  furtherConstruction(ownerHeight) {
-    this.width = this.image.naturalWidth;
-    this.height = this.image.naturalHeight;
+  furtherConstruction(ownerHeight, error = false) {
+    if(!error) {
+      this.width = this.image.naturalWidth;
+      this.height = this.image.naturalHeight;
+    } else {
+      this.width = bases.bulletWidth;
+      this.height = bases.bulletHeight;
+      this.image = null;
+    }
 
     this.x = -1000;
     this.y = canvasor.height - this.height - ownerHeight / 2;
     this.yBase = this.y;
 
-    this.ready = true;
+    this.image.dispatchEvent(new Event('ready'));
   }
 
   getThrown(throwerX, throwerDirection) {
@@ -111,14 +119,21 @@ class Bullet {
   }
 
   draw(translateOffsetX) {
+    if(!this.image) {
+      canvasor.ctx.fillStyle = 'yellow';
+      canvasor.ctx.fillRect(this.x, this.y, this.width, this.height);
+      return;
+    }
+
     if(this.speed > 0)
       canvasor.ctx.drawImage(this.image, this.x, this.y);
     else if(this.speed < 0)
       canvasor.mirrorImage(this.image, this.x, this.y, true, false, translateOffsetX);
 
-    // debug
-    canvasor.ctx.strokeStyle = 'red';
-    canvasor.ctx.strokeRect(this.x, this.y, this.width,  this.height);
+    if(debugor.debug) {
+      canvasor.ctx.strokeStyle = 'red';
+      canvasor.ctx.strokeRect(this.x, this.y, this.width,  this.height);
+    }
   }
 
 }
