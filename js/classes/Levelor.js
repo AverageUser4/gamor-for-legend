@@ -2,30 +2,22 @@
 
 class Levelor {
 
-  // resources
-  backgroundImage;
+  player;
 
-  // player
-  player
-
-  // drawing
   shouldRedraw = true;
 
-  // background, position, etc.
+  backgroundImage;
   backgroundWidth;
   backgroundRepeatCount = 1;
   mapEndX;
   translateOffsetX = 0;
   playerOffsetMoveBackgroundStart = 300;
 
-  // enemies
-  enemyLimit = 20;
+  enemyLimit = 5;
   allEnemies = [];
 
-  // damages taken
   allDamagesOrHeals = [];
 
-  // used by invoking script
   ready = false;
 
   constructor(options) {
@@ -69,12 +61,11 @@ class Levelor {
 
     this.player = new Player('warrior');
     
-    for(let i = 0; i < 3; i++)
+    for(let i = 0; i < Math.floor(Math.random() * 4) + 2; i++)
       this.spawnEnemy('villager', Math.floor(Math.random() * 450) + 250) ;
 
     this.player.image.addEventListener('ready', () => {
       this.ready = true;
-      this.shouldRedraw = true;
       this.draw();
     });
   }
@@ -83,7 +74,49 @@ class Levelor {
     this.allEnemies.push(new Enemy(kind, x, this.player.speed, options));    
   }
 
+  trySpawningEnemy() {
+    if(this.allEnemies.length >= this.enemyLimit)
+        return;
+
+    const kind = Math.floor(Math.random() * 2) ? 'villager' : 'burgher';
+
+    if(
+        this.player.x > canvasor.width + this.playerOffsetMoveBackgroundStart && 
+        Math.floor(Math.random() * 2)
+      ) {
+      // spawn on left side of the player
+      const random = Math.floor(Math.random() * canvasor.width);
+      const start = this.player.x - canvasor.width;
+      const x = start + random;
+      this.spawnEnemy(kind, x);
+    } else {
+      // spawn on right side of the player
+      const random = Math.floor(Math.random() * canvasor.width);
+      const start = this.player.x;
+      const x = start + random;
+      this.spawnEnemy(kind, x);
+    }
+  }
+
+  despawnDistant() {
+    let index = -1;
+
+    for(let i = 0; i < this.allEnemies.length; i++) {
+      const distance = Math.abs(this.allEnemies[i].x - this.player.x);
+      if(distance > canvasor.width * 2) {
+          index = i;
+          break;
+        }
+    }
+
+    if(index !== -1)
+      this.allEnemies.splice(index, 1);
+  }
+
   gameLoopIteration() {
+    this.trySpawningEnemy();
+    this.despawnDistant();
+
     if(this.player.logic(this.mapEndX))
       this.shouldRedraw = true;
     
@@ -196,7 +229,7 @@ class Levelor {
     canvasor.ctx.fillRect(-this.translateOffsetX, 50, canvasor.width, 4);
 
     // player image and frame
-    canvasor.ctx.fillStyle = '#666';
+    canvasor.ctx.fillStyle = '#555';
     canvasor.ctx.fillRect(-this.translateOffsetX + 5, 6, 40, 40);
 
     if(!this.player.noImage) {
@@ -211,11 +244,14 @@ class Levelor {
     canvasor.ctx.strokeRect(-this.translateOffsetX + 5, 6, 40, 40);
 
     // health
-    canvasor.ctx.fillStyle = 'green';
+    canvasor.ctx.fillStyle = '#555';
+    canvasor.ctx.fillRect(-this.translateOffsetX + 65, 6, 325, 40);
+
+    canvasor.ctx.fillStyle = colors.green;
     let fillAmount = this.player.health / this.player.healthMax * 325;
     canvasor.ctx.fillRect(-this.translateOffsetX + 65, 6, fillAmount, 40);
 
-    canvasor.ctx.fillStyle = 'red';
+    canvasor.ctx.strokeStyle = 'black';
     canvasor.ctx.strokeRect(-this.translateOffsetX + 65, 6, 325, 40);
 
     canvasor.ctx.fillStyle = '#111';
@@ -224,7 +260,10 @@ class Levelor {
       -this.translateOffsetX + 75, 32);
 
     // fatigue
-    canvasor.ctx.fillStyle = 'yellow';
+    canvasor.ctx.fillStyle = '#555';
+    canvasor.ctx.fillRect(-this.translateOffsetX + 410, 6, 325, 40);
+
+    canvasor.ctx.fillStyle = colors.yellow;
     fillAmount = this.player.bullet.cooldown / this.player.bullet.cooldownMax * 325;
     canvasor.ctx.fillRect(-this.translateOffsetX + 410, 6, fillAmount, 40);
 
@@ -235,7 +274,7 @@ class Levelor {
       -this.translateOffsetX + 425, 32);
 
     // status effect
-    canvasor.ctx.fillStyle = '#666';
+    canvasor.ctx.fillStyle = '#555';
     canvasor.ctx.fillRect(-this.translateOffsetX + 755, 6, 40, 40);
     canvasor.ctx.strokeRect(-this.translateOffsetX + 755, 6, 40, 40);
     canvasor.ctx.font = '24px sans-serif';

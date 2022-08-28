@@ -42,7 +42,7 @@ class Bullet {
       this.furtherConstruction(ownerHeight, true)
     });
 
-    this.image.src = `weapons/${kind}-bullet.png`;
+    this.image.src = bases[kind].bulletSrc;
   }
 
   furtherConstruction(ownerHeight, error = false) {

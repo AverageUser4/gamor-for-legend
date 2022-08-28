@@ -44,7 +44,7 @@ class Player {
       this.furtherConstruction(kind, true);
     });
 
-    this.image.src = `characters/${kind}.png`;
+    this.image.src = bases[kind].characterSrc;
   }
 
   furtherConstruction(kind, error = false) {

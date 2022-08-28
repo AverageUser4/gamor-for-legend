@@ -2,21 +2,29 @@
 
   class Enemy {
 
-  ready = false;
-  speed = 5;
   width;
   height;
+  direction;
+
   x = 0;
   y = 500;
-  direction;
+
+  speed = 5;
   health = 40;
-  isDead = false;
-  distanceToKeep = 300;
-  state = 'neutral';
-  fightsBack = true;
-  bullet;
+  healthMax = 40;
   damage = 10;
+  level = 1;
+  
+  kind;
+  state = 'neutral';
+  isDead = false;
+  fightsBack = true;
+  distanceToKeep = 300;
+
   image;
+  ready = false;
+
+  bullet;
 
   constructor(kind, x, playerSpeed, options) {
     this.image = new Image();
@@ -29,7 +37,8 @@
       this.furtherConstruction(kind, x, playerSpeed, options, true)
     });
 
-    this.image.src = `characters/${kind}.png`;
+    this.kind = bases[kind];
+    this.image.src = this.kind.characterSrc;
   }
 
   furtherConstruction(kind, x, playerSpeed, options, error = false) {
@@ -162,6 +171,27 @@
   }
 
   draw(translateOffsetX) {
+    // name and level
+    canvasor.ctx.font = 'bold 12px sans-serif';
+
+    const textWidth = canvasor.ctx.measureText(`${this.kind.name}, poziom ${this.level}`).width;
+    const textX = this.x + this.width / 2 - textWidth / 2;
+
+    canvasor.ctx.strokeStyle = 'black';
+    canvasor.ctx.strokeText(`${this.kind.name}, poziom ${this.level}`, textX, this.y - 16);
+    canvasor.ctx.fillStyle = colors.red;
+    canvasor.ctx.fillText(`${this.kind.name}, poziom ${this.level}`, textX, this.y - 16);
+
+    // health bar
+    canvasor.ctx.strokeStyle = 'black';
+    canvasor.ctx.strokeRect(this.x - 1, this.y - 9, this.width + 2, 6);
+
+    canvasor.ctx.fillStyle = '#222';
+    canvasor.ctx.fillRect(this.x, this.y - 8, this.width, 4);
+
+    canvasor.ctx.fillStyle = colors.green;
+    canvasor.ctx.fillRect(this.x, this.y - 8, this.width * (this.health / this.healthMax), 4);
+
     if(!this.image) {
       canvasor.ctx.fillStyle = 'red';
       canvasor.ctx.fillRect(this.x, this.y, this.width, this.height);

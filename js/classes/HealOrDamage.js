@@ -20,20 +20,21 @@ class HealOrDamage {
 
   logic() {
     this.y -= 5;
-    this.opacity -= 0.05;
+    this.opacity -= 0.04;
     if(this.opacity < 0)
       this.opacity = 0;
   }
 
   draw() {
     canvasor.ctx.globalAlpha = this.opacity;
+    canvasor.ctx.font = 'bold 16px sans-serif';
 
     if(this.healOrDamage === 'damage') {
-      canvasor.ctx.fillStyle = 'red';
+      canvasor.ctx.fillStyle = colors.red;
       canvasor.ctx.fillText(`-${this.amount} HP!`, this.x, this.y);
     }
     else {
-      canvasor.ctx.fillStyle = 'green';
+      canvasor.ctx.fillStyle = colors.green;
       canvasor.ctx.fillText(`+${this.amount} HP!`, this.x, this.y);
     }
 
