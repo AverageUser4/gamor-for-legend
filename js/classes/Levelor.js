@@ -62,7 +62,7 @@ class Levelor {
     this.player = new Player('warrior');
     
     for(let i = 0; i < Math.floor(Math.random() * 4) + 2; i++)
-      this.spawnEnemy('villager', Math.floor(Math.random() * 450) + 250) ;
+      this.spawnEnemy('peasant', Math.floor(Math.random() * 450) + 250) ;
 
     this.player.image.addEventListener('ready', () => {
       this.ready = true;
@@ -78,7 +78,9 @@ class Levelor {
     if(this.allEnemies.length >= this.enemyLimit)
         return;
 
-    const kind = Math.floor(Math.random() * 2) ? 'villager' : 'burgher';
+    let kind = Math.floor(Math.random() * 2) ? 'peasant' : 'burgher';
+    kind += Math.floor(Math.random() * 2) ? '' : 'Woman';
+    kind += Math.floor(Math.random() * 2) ? '' : 'Alt';
 
     if(
         this.player.x > canvasor.width + this.playerOffsetMoveBackgroundStart && 

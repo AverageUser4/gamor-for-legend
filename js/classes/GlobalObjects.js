@@ -28,16 +28,52 @@ const bases = {
   enemyWidth: 90,
   enemyHeight: 110,
 
-  villager: {
-    name: 'Wieśniak',
-    characterSrc: dirs.charDir + 'villager.png',
-    bulletSrc: dirs.bulDir + 'dagger.png'
+  peasant: {
+    name: 'Chłop',
+    characterSrc: dirs.charDir + 'peasant.png',
+    bulletSrc: dirs.bulDir + 'pitchfork.png'
+  },
+
+  peasantAlt: {
+    name: 'Chłop',
+    characterSrc: dirs.charDir + 'peasant-2.png',
+    bulletSrc: dirs.bulDir + 'pitchfork.png'
+  },
+
+  peasantWoman: {
+    name: 'Chłopka',
+    characterSrc: dirs.charDir + 'peasant-woman.png',
+    bulletSrc: dirs.bulDir + 'pitchfork.png'
+  },
+
+  peasantWomanAlt: {
+    name: 'Chłopka',
+    characterSrc: dirs.charDir + 'peasant-woman-2.png',
+    bulletSrc: dirs.bulDir + 'pitchfork.png'
   },
 
   burgher: {
     name: 'Mieszczanin',
     characterSrc: dirs.charDir + 'burgher.png',
-    bulletSrc: dirs.bulDir + 'dagger.png'
+    bulletSrc: dirs.bulDir + 'stick.png'
+  },
+
+  burgherAlt: {
+    name: 'Mieszczanin',
+    characterSrc: dirs.charDir + 'burgher-2.png',
+    bulletSrc: dirs.bulDir + 'stick.png'
+  },
+
+  burgherWoman: {
+    name: 'Mieszczanka',
+    characterSrc: dirs.charDir + 'burgher-woman.png',
+    bulletSrc: dirs.bulDir + 'stick.png'
+  },
+
+  burgherWomanAlt: {
+    name: 'Mieszczanka',
+    characterSrc: dirs.charDir + 'burgher-woman-2.png',
+    bulletSrc: dirs.bulDir + 'stick.png'
   },
 
   warrior: {
