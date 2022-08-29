@@ -7,10 +7,11 @@ class Levelor {
   shouldRedraw = true;
 
   levelMap = 'town';
+  levelDifficulty;
 
   backgroundImage;
   backgroundWidth;
-  backgroundRepeatCount = 10;
+  backgroundRepeatCount = 1;
   mapEndX;
   translateOffsetX = 0;
   playerOffsetMoveBackgroundStart = 300;
@@ -22,10 +23,27 @@ class Levelor {
   allDamagesOrHeals = [];
 
   ready = false;
+  changeMap;
+  nextMap = 'town';
+  previousMap;
 
-  constructor(levelMap = 'tutorial', levelDifficulty = 1) {  
+  constructor(levelMap = 'tutorial', levelDifficulty = 0) {  
     this.levelMap = levelMap;
     this.levelDifficulty = levelDifficulty;
+
+    if(this.levelDifficulty === 0 || this.levelDifficulty === 1) {
+      this.previousMap = 'tutorial';
+      this.nextMap = 'town';
+    } else if(this.levelMap === 'town') {
+      this.previousMap = 'dungeon';
+      this.nextMap = 'field';
+    } else if(this.levelMap === 'field') {
+      this.previousMap = 'town';
+      this.nextMap = 'dungeon';
+    } else if(this.levelMap === 'dungeon') {
+      this.previousMap = 'field';
+      this.nextMap = 'town';
+    }
 
     if(this.levelMap === 'tutorial')
       this.backgroundRepeatCount = 1;
@@ -64,7 +82,7 @@ class Levelor {
 
     this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
-    this.player = new Player('warrior');
+    this.player = new Player();
     
     for(let i = 0; i < Math.floor(Math.random() * 4) + 2; i++)
       this.spawnEnemy(Math.floor(Math.random() * 450) + 250);
@@ -101,8 +119,6 @@ class Levelor {
       }
     }
 
-    console.log(kind)
-
     if(this.levelMap !== 'dungeon') {
       kind += Math.floor(Math.random() * 2) ? '' : 'Woman';
       kind += Math.floor(Math.random() * 2) ? '' : 'Alt';
@@ -136,6 +152,17 @@ class Levelor {
   }
 
   gameLoopIteration() {
+    if(interactor.isPressed('e')) {
+      if(
+          this.player.x < 100 &&
+          this.levelMap !== 'tutorial'
+        ) {
+        this.changeMap = { newMap: this.previousMap, difficulty: this.levelDifficulty - 1 };
+      } else if(this.player.x > this.mapEndX - this.player.width - 100) {
+        this.changeMap = { newMap: this.nextMap, difficulty: this.levelDifficulty + 1 };
+      }
+    }
+
     if(this.levelMap !== 'tutorial')
       this.trySpawningEnemy();
 
@@ -255,21 +282,21 @@ class Levelor {
     canvasor.ctx.fillStyle = colors.yellow;
 
     if(
-        this.player.x < 100 && 
+        this.player.x < 100 &&
         this.player.direction === 'left' &&
         this.levelMap !== 'tutorial'
       ) {
-      canvasor.ctx.strokeText(`Naciśnij 'Enter', żeby wyjść.`, 15, 470);
-      canvasor.ctx.fillText(`Naciśnij 'Enter', żeby wyjść.`, 15, 470);
+      canvasor.ctx.strokeText(`Naciśnij 'E', żeby wyjść.`, 15, 470);
+      canvasor.ctx.fillText(`Naciśnij 'E', żeby wyjść.`, 15, 470);
     } else if
         (
           this.player.x > this.mapEndX - this.player.width - 100 &&
           this.player.direction === 'right'
         ) {
-      const w = canvasor.ctx.measureText(`Naciśnij 'Enter', żeby wyjść.`).width;
+      const w = canvasor.ctx.measureText(`Naciśnij 'E', żeby wyjść.`).width;
       console.log(w)
-      canvasor.ctx.strokeText(`Naciśnij 'Enter', żeby wyjść.`, this.mapEndX - w - 15, 470);
-      canvasor.ctx.fillText(`Naciśnij 'Enter', żeby wyjść.`, this.mapEndX - w - 15, 470);
+      canvasor.ctx.strokeText(`Naciśnij 'E', żeby wyjść.`, this.mapEndX - w - 15, 470);
+      canvasor.ctx.fillText(`Naciśnij 'E', żeby wyjść.`, this.mapEndX - w - 15, 470);
     }
   }
 

@@ -2,9 +2,6 @@
 
 class HealOrDamage {
 
-  // should always redraw when there is at least
-  // one instance of this class
-
   x;
   y;
   amount;

@@ -1,10 +1,14 @@
 'use strict';
 
-let levelor = new Levelor('town');
+let levelor = new Levelor();
 
 function gameLoop() {
-  if(levelor.ready)
+  if(levelor.ready) {
     levelor.gameLoopIteration();
+    if(levelor.changeMap) {
+      levelor = new Levelor(levelor.changeMap.newMap, levelor.changeMap.difficulty);
+    }
+  }
 }
 
 setInterval(() => gameLoop(), 33);

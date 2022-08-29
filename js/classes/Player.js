@@ -2,6 +2,8 @@
 
 class Player {
 
+  class = 'warrior';
+
   speed = 7;
   healthMax;
   health;
@@ -20,12 +22,6 @@ class Player {
   
   image;
   bullet;
-
-  // - base damage
-  // - strength
-  // - defence
-  // - endurance
-  // - dexterity
 
   get x() {
     return this.#x;
@@ -46,7 +42,7 @@ class Player {
   // returned after logic
   shouldRedraw = false;
 
-  constructor(kind) {
+  constructor() {
     for(let key in playerStats)
       this[key] = playerStats[key];
 
@@ -55,17 +51,17 @@ class Player {
     this.image = new Image();
 
     this.image.addEventListener('load', () => {
-      this.furtherConstruction(kind);
+      this.furtherConstruction();
     });
     this.image.addEventListener('error', () => {
-      console.error(`Couldn\'t load player\'s image: ${kind}`);
-      this.furtherConstruction(kind, true);
+      console.error(`Couldn\'t load player\'s image: ${this.class}`);
+      this.furtherConstruction(true);
     });
 
-    this.image.src = bases[kind].characterSrc;
+    this.image.src = bases[this.class].characterSrc;
   }
 
-  furtherConstruction(kind, error = false) {
+  furtherConstruction(error = false) {
     if(!error) {
       this.width = this.image.naturalWidth;
       this.height = this.image.naturalHeight;
@@ -78,7 +74,7 @@ class Player {
     this.x = 0;
     this.y = canvasor.height - this.height;
 
-    this.bullet = new Bullet(kind, this.height, this.endurance);
+    this.bullet = new Bullet(this.class, this.height, this.endurance);
 
     this.bullet.image.addEventListener('ready', () => {
       this.image.dispatchEvent(new Event('ready'));
