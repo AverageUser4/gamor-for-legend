@@ -23,6 +23,8 @@ class Player {
   image;
   bullet;
 
+  isDead = false;
+
   get x() {
     return this.#x;
   }
@@ -105,6 +107,7 @@ class Player {
 
     // attack
     if(
+        !this.isDead &&
         this.bullet.cooldown <= 0 && 
         (interactor.isPressed(' ') || interactor.isPressedMouse())
       )
@@ -115,6 +118,11 @@ class Player {
       this.shouldRedraw = false;
       return true;
     }
+  }
+
+  getResurrected() {
+    this.health = this.healthMax;
+    this.isDead = false;
   }
 
   dealDamage() {
@@ -133,16 +141,21 @@ class Player {
 
     if(this.health <= 0) {
       this.health = 0;
-      // this.isDead = true;
+        this.isDead = true;
     }
 
     return damage;
   }
 
   draw(translateOffsetX) {
+    if(this.isDead) {
+      canvasor.ctx.globalAlpha = 0.5;
+    }
+
     if(!this.image) {
       canvasor.ctx.fillStyle = 'green';
       canvasor.ctx.fillRect(this.x, this.y, this.width, this.height);
+      canvasor.ctx.globalAlpha = 1;
       return;
     }
 
@@ -155,6 +168,8 @@ class Player {
       canvasor.ctx.strokeStyle = 'red';
       canvasor.ctx.strokeRect(this.x, this.y, this.width, this.height);
     }
+
+    canvasor.ctx.globalAlpha = 1;
   }
 
 }

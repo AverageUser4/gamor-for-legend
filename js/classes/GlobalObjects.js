@@ -14,6 +14,7 @@ const dirs = {
   bgDir: 'resources/images/backgrounds/',
   charDir: 'resources/images/characters/',
   bulDir: 'resources/images/bullets/',
+  otherDir: 'resources/images/other/',
 };
 
 const bases = {

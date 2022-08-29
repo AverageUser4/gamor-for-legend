@@ -26,16 +26,17 @@ class Levelor {
   changeMap;
   nextMap = 'town';
   previousMap;
+  canLeaveMap = false;
 
   constructor(levelMap = 'tutorial', levelDifficulty = 0) {  
     this.levelMap = levelMap;
     this.levelDifficulty = levelDifficulty;
 
-    if(this.levelDifficulty === 0 || this.levelDifficulty === 1) {
+    if(this.levelDifficulty === 0) {
       this.previousMap = 'tutorial';
       this.nextMap = 'town';
     } else if(this.levelMap === 'town') {
-      this.previousMap = 'dungeon';
+      this.previousMap = this.levelDifficulty === 1 ? 'tutorial' : 'dungeon';
       this.nextMap = 'field';
     } else if(this.levelMap === 'field') {
       this.previousMap = 'town';
@@ -55,6 +56,8 @@ class Levelor {
         console.error(`Unable to load image: ${src}`);
         this.onAllLoaded(true);
       })
+
+    setTimeout(() => this.canLeaveMap = true, 1000);
   }
 
   requestImage(propertyName, src) {
@@ -152,7 +155,11 @@ class Levelor {
   }
 
   gameLoopIteration() {
-    if(interactor.isPressed('e')) {
+    if(
+        interactor.isPressed('e') &&
+        this.canLeaveMap &&
+        !this.player.isDead
+      ) {
       if(
           this.player.x < 100 &&
           this.levelMap !== 'tutorial'
@@ -162,6 +169,17 @@ class Levelor {
         this.changeMap = { newMap: this.nextMap, difficulty: this.levelDifficulty + 1 };
       }
     }
+
+    if( 
+        this.player.isDead &&
+        interactor.isPressed('c') &&
+        Math.abs(this.player.x - orbOfResurrection.x)
+          <= orbOfResurrection.playerReachDistance 
+      ) {
+        this.player.getResurrected();
+        this.onPlayerResurrection();
+        this.shouldRedraw = true;
+      }
 
     if(this.levelMap !== 'tutorial')
       this.trySpawningEnemy();
@@ -202,6 +220,9 @@ class Levelor {
 
         this.allDamagesOrHeals.push(
           new HealOrDamage('damage', this.player.x, this.player.y, dealt));
+
+        if(this.player.isDead)
+          this.onPlayerDeath();
       }
     }
 
@@ -216,7 +237,22 @@ class Levelor {
     for(let val of toBeSpliced)
       this.allDamagesOrHeals.splice(this.allDamagesOrHeals.indexOf(val), 1);
 
+    if(this.player.isDead && !orbOfResurrection.visible)
+      orbOfResurrection.show(this.mapEndX);
+
     this.draw();
+  }
+
+  onPlayerDeath() {
+    orbOfResurrection.show(this.mapEndX);
+
+    for(let val of this.allEnemies) {
+      val.state = 'neutral';
+    }
+  }
+
+  onPlayerResurrection() {
+    orbOfResurrection.hide();
   }
 
   draw() {
@@ -252,6 +288,8 @@ class Levelor {
 
     this.drawAreaLeavePrompt();
 
+    orbOfResurrection.draw(this.player.x);
+
     canvasor.ctx.restore();
   }
 
@@ -279,24 +317,34 @@ class Levelor {
   drawAreaLeavePrompt() {
     canvasor.ctx.font = '16px sans-serif';
     canvasor.ctx.strokeStyle = 'black';
-    canvasor.ctx.fillStyle = colors.yellow;
+    canvasor.ctx.fillStyle = this.player.isDead ? colors.red : colors.yellow;
 
     if(
         this.player.x < 100 &&
         this.player.direction === 'left' &&
         this.levelMap !== 'tutorial'
       ) {
-      canvasor.ctx.strokeText(`Naciśnij 'E', żeby wyjść.`, 15, 470);
-      canvasor.ctx.fillText(`Naciśnij 'E', żeby wyjść.`, 15, 470);
+      if(!this.player.isDead) {
+        canvasor.ctx.strokeText(`Naciśnij 'E', żeby wyjść.`, 15, 470);
+        canvasor.ctx.fillText(`Naciśnij 'E', żeby wyjść.`, 15, 470);
+      } else {
+        canvasor.ctx.strokeText(`Musisz odnaleźć kulę ożywienia, żeby wyjść!`, 15, 470);
+        canvasor.ctx.fillText(`Musisz odnaleźć kulę ożywienia, żeby wyjść!`, 15, 470);
+      }
     } else if
         (
           this.player.x > this.mapEndX - this.player.width - 100 &&
           this.player.direction === 'right'
         ) {
-      const w = canvasor.ctx.measureText(`Naciśnij 'E', żeby wyjść.`).width;
-      console.log(w)
-      canvasor.ctx.strokeText(`Naciśnij 'E', żeby wyjść.`, this.mapEndX - w - 15, 470);
-      canvasor.ctx.fillText(`Naciśnij 'E', żeby wyjść.`, this.mapEndX - w - 15, 470);
+      if(!this.player.isDead) {
+        const w = canvasor.ctx.measureText(`Naciśnij 'E', żeby wyjść.`).width;
+        canvasor.ctx.strokeText(`Naciśnij 'E', żeby wyjść.`, this.mapEndX - w - 15, 470);
+        canvasor.ctx.fillText(`Naciśnij 'E', żeby wyjść.`, this.mapEndX - w - 15, 470);
+      } else {
+        const w = canvasor.ctx.measureText(`Musisz odnaleźć kulę ożywienia, żeby wyjść!`).width;
+        canvasor.ctx.strokeText(`Musisz odnaleźć kulę ożywienia, żeby wyjść!`, this.mapEndX - w - 15, 470);
+        canvasor.ctx.fillText(`Musisz odnaleźć kulę ożywienia, żeby wyjść!`, this.mapEndX - w - 15, 470);
+      }
     }
   }
 

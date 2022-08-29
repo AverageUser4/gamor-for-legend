@@ -31,11 +31,14 @@
     for(let key in options)
       this[key] = options[key];
 
+    if(this.level <= 0)
+      this.level = 1;
+
     this.damage = 5 * this.level;
     this.strength = 1 * this.level;
     this.defence = 1 * this.level;
     this.health = 40 * this.level;
-    this.maxHealth = this.health;
+    this.healthMax = this.health;
 
     this.image = new Image();
 
