@@ -6,6 +6,6 @@ const playerStats = {
   damage: 10,
   strength: 1,
   defence: 1,
-  endurance: 6,
+  endurance: 1,
   dexterity: 1,
 }

@@ -1,6 +1,6 @@
 'use strict';
 
-let levelor = new Levelor();
+let levelor = new Levelor('town');
 
 function gameLoop() {
   if(levelor.ready)

@@ -76,6 +76,24 @@ const bases = {
     bulletSrc: dirs.bulDir + 'stick.png'
   },
 
+  enemyWarrior: {
+    name: 'Wojownik',
+    characterSrc: dirs.charDir + 'enemy-warrior.png',
+    bulletSrc: dirs.bulDir + 'dagger.png'
+  },
+
+  enemyWizard: {
+    name: 'Mag',
+    characterSrc: dirs.charDir + 'enemy-wizard.png',
+    bulletSrc: dirs.bulDir + 'wand.png'
+  },
+
+  enemyArcher: {
+    name: 'Łucznik',
+    characterSrc: dirs.charDir + 'enemy-archer.png',
+    bulletSrc: dirs.bulDir + 'arrow.png'
+  },
+
   warrior: {
     name: 'Wojownik',
     characterSrc: dirs.charDir + 'warrior.png',

@@ -79,16 +79,34 @@ class Levelor {
     const options = { level: this.levelDifficulty };
     let kind = 'peasant';
 
-    if(this.levelMap === 'town')
+    if(this.levelMap === 'town') {
       kind = 'burgher';
-
-    if(this.levelMap === 'tutorial') {
+    } else if(this.levelMap === 'tutorial') {
       options.fightsBack = false;
       kind = Math.floor(Math.random() * 2) ? 'burgher' : 'peasant';
+    } else if(this.levelMap === 'dungeon') {
+      kind = 'enemy';
+      switch(Math.floor(Math.random() * 3)) {
+        case 0:
+          kind += 'Wizard';
+          break;
+
+        case 1:
+          kind += 'Archer';
+          break;
+
+        case 2:
+          kind += 'Warrior';
+          break;
+      }
     }
 
-    kind += Math.floor(Math.random() * 2) ? '' : 'Woman';
-    kind += Math.floor(Math.random() * 2) ? '' : 'Alt';
+    console.log(kind)
+
+    if(this.levelMap !== 'dungeon') {
+      kind += Math.floor(Math.random() * 2) ? '' : 'Woman';
+      kind += Math.floor(Math.random() * 2) ? '' : 'Alt';
+    }
 
     this.promisedEnemies++;
     const enemy = new Enemy(kind, x, options);
@@ -236,7 +254,11 @@ class Levelor {
     canvasor.ctx.strokeStyle = 'black';
     canvasor.ctx.fillStyle = colors.yellow;
 
-    if(this.player.x < 100 && this.player.direction === 'left') {
+    if(
+        this.player.x < 100 && 
+        this.player.direction === 'left' &&
+        this.levelMap !== 'tutorial'
+      ) {
       canvasor.ctx.strokeText(`Naciśnij 'Enter', żeby wyjść.`, 15, 470);
       canvasor.ctx.fillText(`Naciśnij 'Enter', żeby wyjść.`, 15, 470);
     } else if
