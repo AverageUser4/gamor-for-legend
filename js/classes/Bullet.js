@@ -5,6 +5,7 @@ class Bullet {
   canDamage = true;
   cooldownMax = 36;
   cooldown = 0;
+  cooldownStep = 1;
   speedBase = 21;
   speed = 0;
   width;
@@ -31,7 +32,10 @@ class Bullet {
     this.shouldRedraw = true;
   }
 
-  constructor(kind, ownerHeight) {
+  constructor(kind, ownerHeight, ownerEndurance = 1) {
+    this.cooldownMax = 36 * ownerEndurance;
+    this.cooldownStep = ownerEndurance;
+
     this.image = new Image();
 
     this.image.addEventListener('load', () => {
@@ -82,7 +86,7 @@ class Bullet {
       return returnObject;
 
     this.x += this.speed;
-    this.cooldown--;
+    this.cooldown -= this.cooldownStep;
 
     if(this.cooldown < this.cooldownMax * 0.2)
       this.canDamage = false;

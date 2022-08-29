@@ -12,8 +12,10 @@
   speed = 5;
   health = 40;
   healthMax = 40;
-  damage = 10;
   level = 1;
+  damage = 5;
+  strength;
+  defence;
   
   kind;
   state = 'neutral';
@@ -26,6 +28,15 @@
   bullet;
 
   constructor(kind, x, playerSpeed, options) {
+    for(let key in options)
+      this[key] = options[key];
+
+    this.damage = 5 * this.level;
+    this.strength = 1 * this.level;
+    this.defence = 1 * this.level;
+    this.health = 40 * this.level;
+    this.maxHealth = this.health;
+
     this.image = new Image();
 
     this.image.addEventListener('load', () => {
@@ -55,9 +66,6 @@
 
     this.speed = Math.floor(Math.random() * (playerSpeed - 2)) + 2;
     this.distanceToKeep = Math.floor(Math.random() * 181) + 120;
-
-    for(let key in options)
-      this[key] = options[key];
 
     this.direction = Math.floor(Math.random() * 2) ? 'left' : 'right';
 
@@ -161,10 +169,22 @@
       this.bulletX = -1000;
   }
 
+  dealDamage() {
+    const min = this.damage / 2;
+    const max = this.damage * 2;
+    return Math.floor(Math.random() * max) + min;
+  }
+
   getDamaged(damage) {
     this.state = this.fightsBack ? 'aggressive' : 'scared';
 
+    damage = Math.round(damage - this.defence);
+
+    if(damage < 0)
+      damage = 0;
+
     this.health -= damage;
+
     if(this.health <= 0) {
       this.health = 0;
       this.isDead = true;

@@ -2,17 +2,30 @@
 
 class Player {
 
-  healthMax = 100;
-  health = 100;
   speed = 7;
-  width;
-  height;
+  healthMax;
+  health;
+  damage;
+  strength;
+  defence;
+  endurance;
+  dexterity;
+  
   #x = 0;
   y = 500;
   #direction = 'right';
+
+  width;
+  height;
+  
   image;
-  damage = 15;
   bullet;
+
+  // - base damage
+  // - strength
+  // - defence
+  // - endurance
+  // - dexterity
 
   get x() {
     return this.#x;
@@ -34,6 +47,11 @@ class Player {
   shouldRedraw = false;
 
   constructor(kind) {
+    for(let key in playerStats)
+      this[key] = playerStats[key];
+
+    this.healthMax = this.health;
+
     this.image = new Image();
 
     this.image.addEventListener('load', () => {
@@ -60,7 +78,7 @@ class Player {
     this.x = 0;
     this.y = canvasor.height - this.height;
 
-    this.bullet = new Bullet(kind, this.height);
+    this.bullet = new Bullet(kind, this.height, this.endurance);
 
     this.bullet.image.addEventListener('ready', () => {
       this.image.dispatchEvent(new Event('ready'));
@@ -103,8 +121,20 @@ class Player {
     }
   }
 
+  dealDamage() {
+    const min = this.damage / 2;
+    const max = this.damage * 2;
+    return Math.floor(Math.random() * max) + min;
+  }
+
   getDamaged(damage) {
+    damage = Math.round(damage - this.defence);
+
+    if(damage < 0)
+      damage = 0;
+
     this.health -= damage;
+
     if(this.health <= 0) {
       this.health = 0;
       // this.isDead = true;

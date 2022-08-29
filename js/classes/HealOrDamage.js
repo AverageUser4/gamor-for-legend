@@ -30,10 +30,14 @@ class HealOrDamage {
     canvasor.ctx.font = 'bold 16px sans-serif';
 
     if(this.healOrDamage === 'damage') {
+      canvasor.ctx.strokeStyle = 'black';
+      canvasor.ctx.strokeText(`-${this.amount} HP!`, this.x, this.y);
       canvasor.ctx.fillStyle = colors.red;
       canvasor.ctx.fillText(`-${this.amount} HP!`, this.x, this.y);
     }
     else {
+      canvasor.ctx.strokeStyle = 'black';
+      canvasor.ctx.strokeText(`+${this.amount} HP!`, this.x, this.y);
       canvasor.ctx.fillStyle = colors.green;
       canvasor.ctx.fillText(`+${this.amount} HP!`, this.x, this.y);
     }

@@ -91,7 +91,7 @@ class Levelor {
     if(this.allEnemies.length + this.promisedEnemies >= this.enemyLimit)
         return;
 
-    const x = Math.floor(Math.random() * this.mapEndX);
+    const x = Math.floor(Math.random() * (this.mapEndX - 150));
     console.log(x)
 
     if(Math.abs(this.player.x - x) < 500)
@@ -100,20 +100,20 @@ class Levelor {
     this.spawnEnemy(x);
   }
 
-  despawnDistant() {
-    let index = -1;
+  // despawnDistant() {
+  //   let index = -1;
 
-    for(let i = 0; i < this.allEnemies.length; i++) {
-      const distance = Math.abs(this.allEnemies[i].x - this.player.x);
-      if(distance > this.mapEndX / 2) {
-        index = i;
-        break;
-      }
-    }
+  //   for(let i = 0; i < this.allEnemies.length; i++) {
+  //     const distance = Math.abs(this.allEnemies[i].x - this.player.x);
+  //     if(distance > this.mapEndX / 2) {
+  //       index = i;
+  //       break;
+  //     }
+  //   }
 
-    if(index !== -1)
-      this.allEnemies.splice(i, 1);
-  }
+  //   if(index !== -1)
+  //     this.allEnemies.splice(index, 1);
+  // }
 
   isInVisibleSpace(x, width) {
     return x + width > -this.translateOffsetX &&
@@ -136,7 +136,7 @@ class Levelor {
     if(Object.hasOwn(returnObject, 'i')) {
       const i = returnObject.i;
 
-      const dealt = this.allEnemies[i].getDamaged(this.player.damage);
+      const dealt = this.allEnemies[i].getDamaged(this.player.dealDamage());
 
       this.allDamagesOrHeals.push(
         new HealOrDamage('damage', this.allEnemies[i].x, this.allEnemies[i].y, dealt));
@@ -155,7 +155,7 @@ class Levelor {
         this.shouldRedraw = true;
 
       if(Object.hasOwn(returnObject, 'i')) {
-        const dealt = this.player.getDamaged(val.damage);
+        const dealt = this.player.getDamaged(val.dealDamage());
 
         this.allDamagesOrHeals.push(
           new HealOrDamage('damage', this.player.x, this.player.y, dealt));
@@ -237,6 +237,23 @@ class Levelor {
     canvasor.ctx.fillRect(-this.translateOffsetX, 0, canvasor.width, 50);
     canvasor.ctx.fillStyle = '#402e07';
     canvasor.ctx.fillRect(-this.translateOffsetX, 50, canvasor.width, 4);
+
+    // position indicator
+    canvasor.ctx.fillStyle = '#555';
+    canvasor.ctx.fillRect(-this.translateOffsetX, 54, canvasor.width, 8);
+
+    canvasor.ctx.fillStyle = 'rgb(50, 125, 235)';
+    const x = this.player.x / this.mapEndX * canvasor.width + - this.translateOffsetX;
+    canvasor.ctx.fillRect(x, 54, 5, 8);
+
+    canvasor.ctx.fillStyle = colors.red;
+    for(let val of this.allEnemies) {
+      const x = val.x / this.mapEndX * canvasor.width + - this.translateOffsetX;
+      canvasor.ctx.fillRect(x, 54, 5, 8);
+    }
+
+    canvasor.ctx.strokeStyle = 'black';
+    canvasor.ctx.strokeRect(-this.translateOffsetX, 54, canvasor.width, 8);
 
     // player image and frame
     canvasor.ctx.fillStyle = '#555';
