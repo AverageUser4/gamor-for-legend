@@ -27,7 +27,7 @@
 
   bullet;
 
-  constructor(kind, x, playerSpeed, options) {
+  constructor(kind, x, options) {
     for(let key in options)
       this[key] = options[key];
 
@@ -40,18 +40,18 @@
     this.image = new Image();
 
     this.image.addEventListener('load', () => {
-      this.furtherConstruction(kind, x, playerSpeed, options);
+      this.furtherConstruction(kind, x);
     });
     this.image.addEventListener('error', () => {
       console.error(`Couldn\'t load enemy\'s image: ${kind}`);
-      this.furtherConstruction(kind, x, playerSpeed, options, true)
+      this.furtherConstruction(kind, x, true)
     });
 
     this.kind = bases[kind];
     this.image.src = this.kind.characterSrc;
   }
 
-  furtherConstruction(kind, x, playerSpeed, options, error = false) {
+  furtherConstruction(kind, x, error = false) {
     if(!error) {
       this.width = this.image.naturalWidth;
       this.height = this.image.naturalHeight;
@@ -64,7 +64,7 @@
     this.x = x;
     this.y = canvasor.height - this.height;
 
-    this.speed = Math.floor(Math.random() * (playerSpeed - 2)) + 2;
+    this.speed = Math.floor(Math.random() * (playerStats.speed - 2)) + 2;
     this.distanceToKeep = Math.floor(Math.random() * 181) + 120;
 
     this.direction = Math.floor(Math.random() * 2) ? 'left' : 'right';

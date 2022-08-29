@@ -1,6 +1,7 @@
 'use strict';
 
 const playerStats = {
+  speed: 7,
   health: 100,
   damage: 10,
   strength: 1,

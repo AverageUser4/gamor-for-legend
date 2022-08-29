@@ -1,9 +1,6 @@
 'use strict';
 
-let levelor = new Levelor({
-  backgroundSrc: dirs.bgDir + 'town.jpg',
-  levelSize: 5,
-});
+let levelor = new Levelor();
 
 function gameLoop() {
   if(levelor.ready)

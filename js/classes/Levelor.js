@@ -6,9 +6,11 @@ class Levelor {
 
   shouldRedraw = true;
 
+  levelMap = 'town';
+
   backgroundImage;
   backgroundWidth;
-  backgroundRepeatCount = 1;
+  backgroundRepeatCount = 10;
   mapEndX;
   translateOffsetX = 0;
   playerOffsetMoveBackgroundStart = 300;
@@ -21,14 +23,14 @@ class Levelor {
 
   ready = false;
 
-  constructor(options) {
-    if(!Object.hasOwn(options, 'backgroundSrc'))
-      throw new Error('No background source provided in options object of Levelor constuctor.');
+  constructor(levelMap = 'tutorial', levelDifficulty = 1) {  
+    this.levelMap = levelMap;
+    this.levelDifficulty = levelDifficulty;
 
-    if(Object.hasOwn(options, 'levelSize'))
-      this.backgroundRepeatCount = options.levelSize;
+    if(this.levelMap === 'tutorial')
+      this.backgroundRepeatCount = 1;
 
-    this.requestImage('backgroundImage', options.backgroundSrc)
+    this.requestImage('backgroundImage', dirs.bgDir + this.levelMap + '.jpg')
       .then(() => this.onAllLoaded())
       .catch((src) => {
         // it can catch error in onAllLoaded()
@@ -73,13 +75,23 @@ class Levelor {
     });
   }
 
-  spawnEnemy(x = 500, options) {
-    let kind = Math.floor(Math.random() * 2) ? 'peasant' : 'burgher';
+  spawnEnemy(x = 500) {
+    const options = { level: this.levelDifficulty };
+    let kind = 'peasant';
+
+    if(this.levelMap === 'town')
+      kind = 'burgher';
+
+    if(this.levelMap === 'tutorial') {
+      options.fightsBack = false;
+      kind = Math.floor(Math.random() * 2) ? 'burgher' : 'peasant';
+    }
+
     kind += Math.floor(Math.random() * 2) ? '' : 'Woman';
     kind += Math.floor(Math.random() * 2) ? '' : 'Alt';
 
     this.promisedEnemies++;
-    const enemy = new Enemy(kind, x, this.player.speed, options);
+    const enemy = new Enemy(kind, x, options);
 
     enemy.image.addEventListener('ready', () => {
       this.promisedEnemies--;
@@ -92,7 +104,6 @@ class Levelor {
         return;
 
     const x = Math.floor(Math.random() * (this.mapEndX - 150));
-    console.log(x)
 
     if(Math.abs(this.player.x - x) < 500)
       return;
@@ -100,20 +111,6 @@ class Levelor {
     this.spawnEnemy(x);
   }
 
-  // despawnDistant() {
-  //   let index = -1;
-
-  //   for(let i = 0; i < this.allEnemies.length; i++) {
-  //     const distance = Math.abs(this.allEnemies[i].x - this.player.x);
-  //     if(distance > this.mapEndX / 2) {
-  //       index = i;
-  //       break;
-  //     }
-  //   }
-
-  //   if(index !== -1)
-  //     this.allEnemies.splice(index, 1);
-  // }
 
   isInVisibleSpace(x, width) {
     return x + width > -this.translateOffsetX &&
@@ -121,7 +118,8 @@ class Levelor {
   }
 
   gameLoopIteration() {
-    this.trySpawningEnemy();
+    if(this.levelMap !== 'tutorial')
+      this.trySpawningEnemy();
 
     if(this.player.logic(this.mapEndX))
       this.shouldRedraw = true;
@@ -207,6 +205,8 @@ class Levelor {
     for(let val of this.allDamagesOrHeals)
       val.draw(); 
 
+    this.drawAreaLeavePrompt();
+
     canvasor.ctx.restore();
   }
 
@@ -228,6 +228,26 @@ class Levelor {
       } else {
         canvasor.ctx.drawImage(this.backgroundImage, x, 0);
       }
+    }
+  }
+
+  drawAreaLeavePrompt() {
+    canvasor.ctx.font = '16px sans-serif';
+    canvasor.ctx.strokeStyle = 'black';
+    canvasor.ctx.fillStyle = colors.yellow;
+
+    if(this.player.x < 100 && this.player.direction === 'left') {
+      canvasor.ctx.strokeText(`Naciśnij 'Enter', żeby wyjść.`, 15, 470);
+      canvasor.ctx.fillText(`Naciśnij 'Enter', żeby wyjść.`, 15, 470);
+    } else if
+        (
+          this.player.x > this.mapEndX - this.player.width - 100 &&
+          this.player.direction === 'right'
+        ) {
+      const w = canvasor.ctx.measureText(`Naciśnij 'Enter', żeby wyjść.`).width;
+      console.log(w)
+      canvasor.ctx.strokeText(`Naciśnij 'Enter', żeby wyjść.`, this.mapEndX - w - 15, 470);
+      canvasor.ctx.fillText(`Naciśnij 'Enter', żeby wyjść.`, this.mapEndX - w - 15, 470);
     }
   }
 
