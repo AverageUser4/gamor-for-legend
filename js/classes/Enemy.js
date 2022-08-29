@@ -22,7 +22,6 @@
   distanceToKeep = 300;
 
   image;
-  ready = false;
 
   bullet;
 
@@ -63,6 +62,10 @@
     this.direction = Math.floor(Math.random() * 2) ? 'left' : 'right';
 
     this.bullet = new Bullet(kind, this.height);
+
+    this.bullet.image.addEventListener('ready', () => {
+      this.image.dispatchEvent(new Event('ready'));
+    });
   }
 
   logic(playerX, mapEndX) {

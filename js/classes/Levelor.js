@@ -14,6 +14,7 @@ class Levelor {
   playerOffsetMoveBackgroundStart = 300;
 
   enemyLimit = 5;
+  promisedEnemies = 0;
   allEnemies = [];
 
   allDamagesOrHeals = [];
@@ -57,12 +58,14 @@ class Levelor {
     else
       this.backgroundWidth = this.backgroundImage.naturalWidth;
 
+    this.enemyLimit = Math.round(this.backgroundWidth / 400 * this.backgroundRepeatCount);
+
     this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
     this.player = new Player('warrior');
     
     for(let i = 0; i < Math.floor(Math.random() * 4) + 2; i++)
-      this.spawnEnemy('peasant', Math.floor(Math.random() * 450) + 250) ;
+      this.spawnEnemy(Math.floor(Math.random() * 450) + 250);
 
     this.player.image.addEventListener('ready', () => {
       this.ready = true;
@@ -70,34 +73,31 @@ class Levelor {
     });
   }
 
-  spawnEnemy(kind, x = 500, options) {
-    this.allEnemies.push(new Enemy(kind, x, this.player.speed, options));    
-  }
-
-  trySpawningEnemy() {
-    if(this.allEnemies.length >= this.enemyLimit)
-        return;
-
+  spawnEnemy(x = 500, options) {
     let kind = Math.floor(Math.random() * 2) ? 'peasant' : 'burgher';
     kind += Math.floor(Math.random() * 2) ? '' : 'Woman';
     kind += Math.floor(Math.random() * 2) ? '' : 'Alt';
 
-    if(
-        this.player.x > canvasor.width + this.playerOffsetMoveBackgroundStart && 
-        Math.floor(Math.random() * 2)
-      ) {
-      // spawn on left side of the player
-      const random = Math.floor(Math.random() * canvasor.width);
-      const start = this.player.x - canvasor.width;
-      const x = start + random;
-      this.spawnEnemy(kind, x);
-    } else {
-      // spawn on right side of the player
-      const random = Math.floor(Math.random() * canvasor.width);
-      const start = this.player.x;
-      const x = start + random;
-      this.spawnEnemy(kind, x);
-    }
+    this.promisedEnemies++;
+    const enemy = new Enemy(kind, x, this.player.speed, options);
+
+    enemy.image.addEventListener('ready', () => {
+      this.promisedEnemies--;
+      this.allEnemies.push(enemy);
+    });
+  }
+
+  trySpawningEnemy() {
+    if(this.allEnemies.length + this.promisedEnemies >= this.enemyLimit)
+        return;
+
+    const x = Math.floor(Math.random() * this.mapEndX);
+    console.log(x)
+
+    if(Math.abs(this.player.x - x) < 500)
+      return;
+
+    this.spawnEnemy(x);
   }
 
   despawnDistant() {
@@ -105,19 +105,23 @@ class Levelor {
 
     for(let i = 0; i < this.allEnemies.length; i++) {
       const distance = Math.abs(this.allEnemies[i].x - this.player.x);
-      if(distance > canvasor.width * 2) {
-          index = i;
-          break;
-        }
+      if(distance > this.mapEndX / 2) {
+        index = i;
+        break;
+      }
     }
 
     if(index !== -1)
-      this.allEnemies.splice(index, 1);
+      this.allEnemies.splice(i, 1);
+  }
+
+  isInVisibleSpace(x, width) {
+    return x + width > -this.translateOffsetX &&
+           x < -this.translateOffsetX + canvasor.width;
   }
 
   gameLoopIteration() {
     this.trySpawningEnemy();
-    this.despawnDistant();
 
     if(this.player.logic(this.mapEndX))
       this.shouldRedraw = true;
@@ -188,13 +192,17 @@ class Levelor {
 
     this.player.draw(this.translateOffsetX);
 
-    for(let val of this.allEnemies)
-      val.draw(this.translateOffsetX);
+    for(let val of this.allEnemies) {
+      if(this.isInVisibleSpace(val.x, val.width))
+        val.draw(this.translateOffsetX);
+    }
 
     this.player.bullet.draw(this.translateOffsetX);
 
-    for(let val of this.allEnemies)
-      val.bullet.draw(this.translateOffsetX);
+    for(let val of this.allEnemies) {
+      if(this.isInVisibleSpace(val.bullet.x, val.bullet.width))
+        val.bullet.draw(this.translateOffsetX);
+    }
 
     for(let val of this.allDamagesOrHeals)
       val.draw(); 
