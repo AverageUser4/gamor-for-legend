@@ -11,7 +11,7 @@ class Levelor {
 
   backgroundImage;
   backgroundWidth;
-  backgroundRepeatCount = 1;
+  backgroundRepeatCount = 10;
   mapEndX;
   translateOffsetX = 0;
   playerOffsetMoveBackgroundStart = 300;
@@ -28,9 +28,12 @@ class Levelor {
   previousMap;
   canLeaveMap = false;
 
-  constructor(levelMap = 'tutorial', levelDifficulty = 0) {  
+  startOnEnd = false;
+
+  constructor(levelMap = 'tutorial', levelDifficulty = 0, startOnEnd = false) {  
     this.levelMap = levelMap;
     this.levelDifficulty = levelDifficulty;
+    this.startOnEnd = startOnEnd;
 
     if(this.levelDifficulty === 0) {
       this.previousMap = 'tutorial';
@@ -85,7 +88,7 @@ class Levelor {
 
     this.mapEndX = this.backgroundRepeatCount * this.backgroundWidth;
 
-    this.player = new Player();
+    this.player = new Player(this.startOnEnd, this.mapEndX);
     
     for(let i = 0; i < Math.floor(Math.random() * 4) + 2; i++)
       this.spawnEnemy(Math.floor(Math.random() * 450) + 250);
@@ -164,13 +167,21 @@ class Levelor {
           this.player.x < 100 &&
           this.levelMap !== 'tutorial'
         ) {
-        this.changeMap = { newMap: this.previousMap, difficulty: this.levelDifficulty - 1 };
+        this.changeMap = { 
+          newMap: this.previousMap,
+          difficulty: this.levelDifficulty - 1,
+          startOnEnd: true,
+        };
       } else if(this.player.x > this.mapEndX - this.player.width - 100) {
-        this.changeMap = { newMap: this.nextMap, difficulty: this.levelDifficulty + 1 };
+        this.changeMap = { 
+          newMap: this.nextMap, 
+          difficulty: this.levelDifficulty + 1,
+          startOnEnd: false,
+        };
       }
     }
 
-    if( 
+    if(
         this.player.isDead &&
         interactor.isPressed('c') &&
         Math.abs(this.player.x - orbOfResurrection.x)
@@ -355,20 +366,24 @@ class Levelor {
     canvasor.ctx.fillStyle = '#402e07';
     canvasor.ctx.fillRect(-this.translateOffsetX, 50, canvasor.width, 4);
 
-    // position indicator
+
+    // position bar background
     canvasor.ctx.fillStyle = '#555';
     canvasor.ctx.fillRect(-this.translateOffsetX, 54, canvasor.width, 8);
 
-    canvasor.ctx.fillStyle = 'rgb(50, 125, 235)';
-    const x = this.player.x / this.mapEndX * canvasor.width + - this.translateOffsetX;
-    canvasor.ctx.fillRect(x, 54, 5, 8);
-
+    // enemies positions
     canvasor.ctx.fillStyle = colors.red;
     for(let val of this.allEnemies) {
       const x = val.x / this.mapEndX * canvasor.width + - this.translateOffsetX;
       canvasor.ctx.fillRect(x, 54, 5, 8);
     }
 
+    // player's position
+    canvasor.ctx.fillStyle = 'rgb(50, 125, 235)';
+    const x = this.player.x / this.mapEndX * canvasor.width + - this.translateOffsetX;
+    canvasor.ctx.fillRect(x, 54, 5, 8);
+
+    // position bar frame
     canvasor.ctx.strokeStyle = 'black';
     canvasor.ctx.strokeRect(-this.translateOffsetX, 54, canvasor.width, 8);
 

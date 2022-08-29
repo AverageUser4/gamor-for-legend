@@ -44,7 +44,7 @@ class Player {
   // returned after logic
   shouldRedraw = false;
 
-  constructor() {
+  constructor(startOnEnd, mapEndX) {
     for(let key in playerStats)
       this[key] = playerStats[key];
 
@@ -53,17 +53,17 @@ class Player {
     this.image = new Image();
 
     this.image.addEventListener('load', () => {
-      this.furtherConstruction();
+      this.furtherConstruction(startOnEnd, mapEndX);
     });
     this.image.addEventListener('error', () => {
       console.error(`Couldn\'t load player\'s image: ${this.class}`);
-      this.furtherConstruction(true);
+      this.furtherConstruction(startOnEnd, mapEndX, true);
     });
 
     this.image.src = bases[this.class].characterSrc;
   }
 
-  furtherConstruction(error = false) {
+  furtherConstruction(startOnEnd, mapEndX, error = false) {
     if(!error) {
       this.width = this.image.naturalWidth;
       this.height = this.image.naturalHeight;
@@ -73,7 +73,11 @@ class Player {
       this.image = null;
     }
 
-    this.x = 0;
+    if(startOnEnd) {
+      this.direction = 'left';
+      this.x = mapEndX - this.width;
+    }
+
     this.y = canvasor.height - this.height;
 
     this.bullet = new Bullet(this.class, this.height, this.endurance);

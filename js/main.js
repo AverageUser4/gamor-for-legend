@@ -6,7 +6,11 @@ function gameLoop() {
   if(levelor.ready) {
     levelor.gameLoopIteration();
     if(levelor.changeMap) {
-      levelor = new Levelor(levelor.changeMap.newMap, levelor.changeMap.difficulty);
+      levelor = new Levelor(
+        levelor.changeMap.newMap,
+        levelor.changeMap.difficulty,
+        levelor.changeMap.startOnEnd,
+      );
     }
   }
 }
